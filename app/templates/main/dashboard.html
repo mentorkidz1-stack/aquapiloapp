@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="h3 mb-0">Tableau de bord — {{ aujourdhui.strftime("%d/%m/%Y") }}</h1>
+  <div class="d-flex gap-2">
+    <form method="get">
+      <select name="boutique" class="form-select" onchange="this.form.submit()">
+        <option value="">Toutes les boutiques</option>
+        {% for b in boutiques %}
+        <option value="{{ b.id }}" {{ 'selected' if boutique_id == b.id }}>{{ b.nom }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <a href="{{ url_for('ventes.caisse') }}" class="btn btn-primary text-nowrap">
+      <i class="bi bi-cash-register"></i> Caisse</a>
+  </div>
+</div>
+
+{% if montrer_ventes %}
+<!-- Indicateurs du jour -->
+<div class="row g-2 mb-4">
+  {% for libelle, valeur, icone, couleur in [
+      ("CA du jour", ind.ca | fcfa, "cash-stack", "primary"),
+      ("Marge du jour", ind.marge | fcfa, "graph-up-arrow", "success"),
+      ("Ventes", ind.nb_ventes, "receipt", "info"),
+      ("Pertes du jour", ind.pertes | fcfa, "exclamation-octagon", "danger")] %}
+  <div class="col-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body py-3 d-flex align-items-center gap-3">
+        <i class="bi bi-{{ icone }} fs-3 text-{{ couleur }}"></i>
+        <div>
+          <div class="text-muted small">{{ libelle }}</div>
+          <div class="h5 mb-0">{{ valeur }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="alert alert-secondary">
+  <i class="bi bi-lock"></i> Le rapport des ventes journalier est verrouillé
+  par la direction. Vous conservez l'accès à toute la gestion opérationnelle.
+</div>
+{% endif %}
+
+<div class="row g-3">
+  {% if jours %}
+  <!-- CA des 7 derniers jours (direction uniquement) -->
+  <div class="col-12 col-lg-7">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h6">CA et marge — 7 derniers jours</h2>
+        <canvas id="chart-jours" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="col-12 {{ 'col-lg-5' if jours else 'col-lg-6' }}">
+    {% if montrer_ventes %}
+    <!-- Paiements du jour -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <h2 class="h6">Encaissements du jour</h2>
+        {% for mode, nb, total in paiements %}
+        <div class="d-flex justify-content-between border-bottom py-1">
+          <span>{{ mode }} <span class="text-muted small">({{ nb }})</span></span>
+          <strong>{{ total | fcfa }}</strong>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">Aucune vente aujourd'hui pour l'instant.</p>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if alertes is defined %}
+    <!-- Alertes stock -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h2 class="h6 text-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          Alertes stock ({{ alertes | length }})</h2>
+        {% for a in alertes[:8] %}
+        <div class="d-flex justify-content-between border-bottom py-1">
+          <span>{{ a.produit.nom }}</span>
+          <span class="badge bg-danger">{{ '%g' % a.stock }} {{ a.produit.unite_affichee }}</span>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">Aucun produit sous son seuil. 👍</p>
+        {% endfor %}
+        {% if alertes | length > 8 %}
+        <div class="small text-muted mt-1">+ {{ alertes | length - 8 }} autre(s) —
+          voir <a href="{{ url_for('produits.liste') }}">Produits</a></div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if current_user.is_direction or current_user.peut_voir_rapport_journalier %}
+<div class="mt-3 d-flex flex-wrap gap-2">
+  <a href="{{ url_for('rapports.index') }}" class="btn btn-outline-primary">
+    <i class="bi bi-bar-chart-line"></i> Rapports</a>
+  <a href="{{ url_for('rapports.export', type_p='jour', fmt='pdf') }}"
+     class="btn btn-outline-danger">
+    <i class="bi bi-file-earmark-pdf"></i> Point du jour (PDF)</a>
+  <a href="{{ url_for('rapports.export', type_p='jour', fmt='xlsx') }}"
+     class="btn btn-outline-success">
+    <i class="bi bi-file-earmark-excel"></i> Point du jour (Excel)</a>
+  {% if current_user.is_direction %}
+  <a href="{{ url_for('rapports.export', type_p='mois', fmt='xlsx') }}"
+     class="btn btn-outline-success">
+    <i class="bi bi-file-earmark-excel"></i> Point du mois (Excel)</a>
+  {% endif %}
+  <a href="{{ url_for('ventes.ticket_demo') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-printer"></i> Test d'impression 58 mm</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if jours %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+const JOURS = {{ jours | tojson }};
+new Chart(document.getElementById("chart-jours"), {
+  data: {
+    labels: JOURS.map(j => j.libelle),
+    datasets: [
+      { type: "bar", label: "CA", data: JOURS.map(j => j.ca),
+        backgroundColor: "rgba(31,78,121,.6)" },
+      { type: "line", label: "Marge", data: JOURS.map(j => j.marge),
+        borderColor: "#198754", backgroundColor: "#198754", tension: .3 },
+    ],
+  },
+  options: { scales: { y: { beginAtZero: true } } },
+});
+</script>
+{% endif %}
+{% endblock %}

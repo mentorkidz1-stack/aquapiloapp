@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}Rapports{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="h3 mb-0">Rapports & comparaisons</h1>
+  <form method="get">
+    <select name="boutique" class="form-select" onchange="this.form.submit()">
+      <option value="all">Toutes les boutiques</option>
+      {% for b in boutiques %}
+      <option value="{{ b.id }}" {{ 'selected' if boutique_id == b.id }}>{{ b.nom }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+<!-- Exports -->
+<div class="card border-0 shadow-sm mb-4" style="max-width: 720px;">
+  <div class="card-body">
+    <h2 class="h6 mb-3"><i class="bi bi-download"></i> Exporter un point</h2>
+    <form class="row g-2" id="form-export">
+      <div class="col-12 col-md-3">
+        <input type="date" id="export-jour" class="form-control"
+               value="{{ aujourdhui.isoformat() }}">
+      </div>
+      <div class="col-12 col-md-9 d-flex flex-wrap gap-2">
+        {% for type_p, libelle in [('jour', 'Journalier'), ('semaine', 'Hebdomadaire'), ('mois', 'Mensuel')] %}
+        <div class="btn-group">
+          <button type="button" class="btn btn-outline-success btn-export"
+                  data-type="{{ type_p }}" data-fmt="xlsx">
+            <i class="bi bi-file-earmark-excel"></i> {{ libelle }} Excel</button>
+          <button type="button" class="btn btn-outline-danger btn-export"
+                  data-type="{{ type_p }}" data-fmt="pdf">
+            <i class="bi bi-file-earmark-pdf"></i> PDF</button>
+        </div>
+        {% endfor %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Comparaison hebdomadaire -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <h2 class="h5">Comparaison hebdomadaire (8 semaines)</h2>
+    <canvas id="chart-semaines" height="90"></canvas>
+    <div class="table-responsive mt-3">
+    <table class="table table-sm table-hover">
+      <thead class="table-light">
+        <tr><th>Semaine</th><th class="text-end">CA</th><th class="text-end">Var. CA</th>
+            <th class="text-end">Marge</th><th class="text-end">Var. marge</th>
+            <th class="text-end">Volume</th><th class="text-end">Ventes</th></tr>
+      </thead>
+      <tbody>
+      {% for s in semaines | reverse %}
+        <tr class="{{ 'table-info' if s.en_cours }}">
+          <td>{{ s.libelle }}{{ ' (en cours)' if s.en_cours }}</td>
+          <td class="text-end">{{ s.ca | fcfa }}</td>
+          <td class="text-end">
+            {% if s.ca_var is not none %}
+              <span class="badge bg-{{ 'success' if s.ca_var >= 0 else 'danger' }}">
+                {{ '%+g' % s.ca_var }} %</span>
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-end">{{ s.marge | fcfa }}</td>
+          <td class="text-end">
+            {% if s.marge_var is not none %}
+              <span class="badge bg-{{ 'success' if s.marge_var >= 0 else 'danger' }}">
+                {{ '%+g' % s.marge_var }} %</span>
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-end">{{ '%g' % s.volume }}</td>
+          <td class="text-end">{{ s.nb_ventes }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<!-- Comparaison mensuelle -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <h2 class="h5">Comparaison mensuelle (6 mois)</h2>
+    <canvas id="chart-mois" height="90"></canvas>
+    <div class="table-responsive mt-3">
+    <table class="table table-sm table-hover">
+      <thead class="table-light">
+        <tr><th>Mois</th><th class="text-end">CA</th><th class="text-end">Var. CA</th>
+            <th class="text-end">Marge</th><th class="text-end">Var. marge</th>
+            <th class="text-end">Ventes</th></tr>
+      </thead>
+      <tbody>
+      {% for m in mois | reverse %}
+        <tr class="{{ 'table-info' if m.en_cours }}">
+          <td>{{ m.libelle }}{{ ' (en cours)' if m.en_cours }}</td>
+          <td class="text-end">{{ m.ca | fcfa }}</td>
+          <td class="text-end">
+            {% if m.ca_var is not none %}
+              <span class="badge bg-{{ 'success' if m.ca_var >= 0 else 'danger' }}">
+                {{ '%+g' % m.ca_var }} %</span>
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-end">{{ m.marge | fcfa }}</td>
+          <td class="text-end">
+            {% if m.marge_var is not none %}
+              <span class="badge bg-{{ 'success' if m.marge_var >= 0 else 'danger' }}">
+                {{ '%+g' % m.marge_var }} %</span>
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-end">{{ m.nb_ventes }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<!-- Top / Flop -->
+<div class="row g-3 mb-4">
+  <div class="col-12 col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 text-success"><i class="bi bi-trophy"></i> Top produits (mois en cours)</h2>
+        <table class="table table-sm">
+          <thead class="table-light"><tr><th>Produit</th>
+            <th class="text-end">Qté</th><th class="text-end">CA</th>
+            <th class="text-end">Marge</th></tr></thead>
+          <tbody>
+          {% for d in top %}
+            <tr><td>{{ d.nom }}</td><td class="text-end">{{ '%g' % d.quantite }}</td>
+                <td class="text-end">{{ d.ca | fcfa }}</td>
+                <td class="text-end text-success fw-semibold">{{ d.marge | fcfa }}</td></tr>
+          {% else %}
+            <tr><td colspan="4" class="text-muted text-center">Aucune vente ce mois.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 text-danger"><i class="bi bi-graph-down-arrow"></i> Flop produits (mois en cours)</h2>
+        <table class="table table-sm">
+          <thead class="table-light"><tr><th>Produit</th>
+            <th class="text-end">Qté</th><th class="text-end">CA</th>
+            <th class="text-end">Marge</th></tr></thead>
+          <tbody>
+          {% for d in flop %}
+            <tr><td>{{ d.nom }}</td><td class="text-end">{{ '%g' % d.quantite }}</td>
+                <td class="text-end">{{ d.ca | fcfa }}</td>
+                <td class="text-end text-danger fw-semibold">{{ d.marge | fcfa }}</td></tr>
+          {% else %}
+            <tr><td colspan="4" class="text-muted text-center">Aucune vente ce mois.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+const SEMAINES = {{ semaines | tojson }};
+const MOIS = {{ mois | tojson }};
+
+function graphe(canvasId, serie) {
+  new Chart(document.getElementById(canvasId), {
+    data: {
+      labels: serie.map(p => p.libelle),
+      datasets: [
+        { type: "bar", label: "CA (FCFA)", data: serie.map(p => p.ca),
+          backgroundColor: "rgba(31,78,121,.6)", yAxisID: "y" },
+        { type: "line", label: "Marge (FCFA)", data: serie.map(p => p.marge),
+          borderColor: "#198754", backgroundColor: "#198754",
+          tension: .3, yAxisID: "y" },
+        { type: "line", label: "Volume", data: serie.map(p => p.volume),
+          borderColor: "#fd7e14", backgroundColor: "#fd7e14",
+          borderDash: [6, 4], tension: .3, yAxisID: "y2" },
+      ],
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true, position: "left",
+             title: { display: true, text: "FCFA" } },
+        y2: { beginAtZero: true, position: "right",
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: "Volume" } },
+      },
+    },
+  });
+}
+graphe("chart-semaines", SEMAINES);
+graphe("chart-mois", MOIS);
+
+document.querySelectorAll(".btn-export").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const jour = document.getElementById("export-jour").value;
+    const boutique = "{{ boutique_id or 'all' }}";
+    window.location = `/rapports/export/${btn.dataset.type}/${btn.dataset.fmt}?jour=${jour}&boutique=${boutique}`;
+  });
+});
+</script>
+{% endblock %}

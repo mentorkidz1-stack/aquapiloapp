@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}Caisse{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Caisse — Nouvelle vente</h1>
+
+<div class="mb-3" style="max-width: 420px;">
+  <label class="form-label fw-semibold">Boutique</label>
+  {% if boutique_fixe %}
+    {% for b in boutiques %}{% if b.id == boutique_fixe %}
+    <input class="form-control form-control-lg" value="{{ b.nom }}" readonly>
+    <input type="hidden" id="sel-boutique-fixe" value="{{ b.id }}">
+    {% endif %}{% endfor %}
+  {% else %}
+  <select id="sel-boutique" class="form-select form-select-lg">
+    {% for b in boutiques %}
+    <option value="{{ b.id }}">{{ b.nom }}</option>
+    {% endfor %}
+  </select>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  <!-- Ajout d'une ligne -->
+  <div class="col-12 col-lg-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="mb-3 position-relative">
+          <label class="form-label">Produit — tapez pour rechercher</label>
+          <input id="inp-recherche" class="form-control form-control-lg"
+                 placeholder="ex. til, poulet, 20+..." autocomplete="off">
+          <div id="liste-resultats" class="list-group position-absolute w-100 shadow"
+               style="z-index: 1050; max-height: 320px; overflow-y: auto; display: none;"></div>
+          <div class="form-text" id="info-produit">Aucun produit sélectionné.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Quantité <span id="lbl-unite"></span></label>
+          <input id="inp-qte" class="form-control form-control-lg" inputmode="decimal"
+                 placeholder="ex. 1,25">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Prix (FCFA / unité)</label>
+          <input id="inp-prix" class="form-control form-control-lg" inputmode="numeric"
+                 {% if not prix_modifiable %}readonly{% endif %}>
+          {% if not prix_modifiable %}
+          <div class="form-text">Prix catalogue (seule la direction peut le modifier).</div>
+          {% endif %}
+        </div>
+        <button id="btn-ajouter" class="btn btn-success btn-lg w-100" type="button" disabled>
+          <i class="bi bi-plus-lg"></i> Ajouter au ticket
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ticket en cours -->
+  <div class="col-12 col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5">Ticket en cours</h2>
+        <div class="table-responsive">
+          <table class="table align-middle" id="tbl-lignes">
+            <thead class="table-light">
+              <tr><th>Produit</th><th class="text-end">Qté</th>
+                  <th class="text-end">Prix</th><th class="text-end">Montant</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="d-flex justify-content-between align-items-center border-top pt-3">
+          <span class="h5 mb-0">TOTAL</span>
+          <span class="h4 mb-0 fw-bold" id="total-affiche">0 FCFA</span>
+        </div>
+
+        <form method="post" id="form-vente" class="mt-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="lignes" id="inp-lignes">
+          <input type="hidden" name="boutique_id" id="inp-boutique">
+          <label class="form-label">Mode de paiement</label>
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            {% for code, libelle in modes.items() %}
+            <input type="radio" class="btn-check" name="mode_paiement"
+                   id="mode-{{ code }}" value="{{ code }}"
+                   {{ 'checked' if loop.first }}>
+            <label class="btn btn-outline-primary" for="mode-{{ code }}">{{ libelle }}</label>
+            {% endfor %}
+          </div>
+          <button class="btn btn-primary btn-lg w-100" type="submit" id="btn-valider" disabled>
+            <i class="bi bi-check-lg"></i> Valider la vente et imprimer
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PRODUITS = {{ produits_json | tojson }};
+const lignes = [];
+let produitSelectionne = null;
+
+const selBoutique = document.getElementById("sel-boutique");
+const boutiqueFixe = document.getElementById("sel-boutique-fixe");
+const inpRecherche = document.getElementById("inp-recherche");
+const listeResultats = document.getElementById("liste-resultats");
+const inpQte = document.getElementById("inp-qte");
+const inpPrix = document.getElementById("inp-prix");
+const lblUnite = document.getElementById("lbl-unite");
+const infoProduit = document.getElementById("info-produit");
+const btnAjouter = document.getElementById("btn-ajouter");
+const tbody = document.querySelector("#tbl-lignes tbody");
+const totalAffiche = document.getElementById("total-affiche");
+const btnValider = document.getElementById("btn-valider");
+
+function boutiqueCourante() {
+  return boutiqueFixe ? boutiqueFixe.value : selBoutique.value;
+}
+function fcfa(n) {
+  return n.toLocaleString("fr-FR").replace(/\u00a0/g, "\u202f") + " FCFA";
+}
+// Recherche insensible aux accents et à la casse : "tcheke" trouve "Tchêkê"
+function normaliser(s) {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+function stockDe(p) {
+  return p.stocks[boutiqueCourante()] ?? 0;
+}
+
+// ---------- Recherche instantanée ----------
+function afficherResultats() {
+  const terme = normaliser(inpRecherche.value.trim());
+  const trouves = PRODUITS.filter(p => normaliser(p.nom).includes(terme))
+                          .slice(0, 12);
+  listeResultats.innerHTML = "";
+  if (trouves.length === 0) {
+    listeResultats.innerHTML =
+      '<div class="list-group-item text-muted">Aucun produit trouvé.</div>';
+  }
+  trouves.forEach(p => {
+    const stock = stockDe(p);
+    const el = document.createElement("button");
+    el.type = "button";
+    el.className = "list-group-item list-group-item-action d-flex justify-content-between align-items-center";
+    el.innerHTML = `<span><strong>${p.nom}</strong>
+        <small class="text-muted">(${p.unite === "kg" ? "kg" : "pièce"})</small></span>
+      <span class="badge ${stock <= 0 ? "bg-danger" : "bg-secondary"}">
+        ${stock.toLocaleString("fr-FR")} ${p.unite === "kg" ? "kg" : "pc"}</span>`;
+    el.addEventListener("click", () => choisirProduit(p));
+    listeResultats.appendChild(el);
+  });
+  listeResultats.style.display = "block";
+}
+
+function choisirProduit(p) {
+  produitSelectionne = p;
+  inpRecherche.value = p.nom;
+  listeResultats.style.display = "none";
+  inpPrix.value = p.prix_vente;
+  lblUnite.textContent = p.unite === "kg" ? "(kg)" : "(pièces)";
+  infoProduit.textContent = "Stock (cette boutique) : "
+    + stockDe(p).toLocaleString("fr-FR") + (p.unite === "kg" ? " kg" : " pièce(s)");
+  btnAjouter.disabled = false;
+  inpQte.focus();
+}
+
+inpRecherche.addEventListener("input", () => {
+  produitSelectionne = null;
+  btnAjouter.disabled = true;
+  infoProduit.textContent = "Aucun produit sélectionné.";
+  afficherResultats();
+});
+inpRecherche.addEventListener("focus", afficherResultats);
+document.addEventListener("click", e => {
+  if (!listeResultats.contains(e.target) && e.target !== inpRecherche) {
+    listeResultats.style.display = "none";
+  }
+});
+// Entrée = choisir le premier résultat
+inpRecherche.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const premier = listeResultats.querySelector("button");
+    if (premier) premier.click();
+  }
+});
+
+if (selBoutique) selBoutique.addEventListener("change", () => {
+  if (lignes.length > 0 &&
+      !confirm("Changer de boutique vide le ticket en cours. Continuer ?")) {
+    return;
+  }
+  lignes.length = 0; rendre();
+  if (produitSelectionne) choisirProduit(produitSelectionne);  // rafraîchit le stock
+});
+
+// ---------- Ticket en cours ----------
+function rendre() {
+  tbody.innerHTML = "";
+  let total = 0;
+  lignes.forEach((l, i) => {
+    total += l.montant;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${l.nom}</td>
+      <td class="text-end">${l.quantiteAff}</td>
+      <td class="text-end">${l.prix.toLocaleString("fr-FR")}</td>
+      <td class="text-end fw-semibold">${l.montant.toLocaleString("fr-FR")}</td>
+      <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger"
+          onclick="supprimer(${i})"><i class="bi bi-x-lg"></i></button></td>`;
+    tbody.appendChild(tr);
+  });
+  totalAffiche.textContent = fcfa(total);
+  btnValider.disabled = lignes.length === 0;
+}
+window.supprimer = i => { lignes.splice(i, 1); rendre(); };
+
+btnAjouter.addEventListener("click", () => {
+  const p = produitSelectionne;
+  const qte = parseFloat((inpQte.value || "").replace(",", "."));
+  const prix = parseInt(inpPrix.value);
+  if (!p || !qte || qte <= 0 || isNaN(prix) || prix < 0) {
+    alert("Vérifiez le produit, la quantité et le prix."); return;
+  }
+  lignes.push({
+    produit_id: p.id, nom: p.nom,
+    quantite: qte,
+    quantiteAff: qte.toLocaleString("fr-FR") + (p.unite === "kg" ? " kg" : " pc"),
+    prix: prix,
+    montant: Math.round(qte * prix),
+  });
+  inpQte.value = "";
+  inpRecherche.value = "";
+  produitSelectionne = null;
+  btnAjouter.disabled = true;
+  infoProduit.textContent = "Aucun produit sélectionné.";
+  rendre();
+  inpRecherche.focus();
+});
+
+document.getElementById("form-vente").addEventListener("submit", () => {
+  document.getElementById("inp-lignes").value = JSON.stringify(
+    lignes.map(l => ({produit_id: l.produit_id, quantite: l.quantite, prix: l.prix }))
+  );
+  document.getElementById("inp-boutique").value = boutiqueCourante();
+});
+</script>
+{% endblock %}

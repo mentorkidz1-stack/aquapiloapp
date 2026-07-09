@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Rapport du jour{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="h3 mb-0">Rapport des ventes — {{ aujourdhui.strftime("%d/%m/%Y") }}</h1>
+  <form method="get" class="d-flex gap-2">
+    <select name="boutique" class="form-select" onchange="this.form.submit()">
+      <option value="all">Toutes les boutiques</option>
+      {% for b in boutiques %}
+      <option value="{{ b.id }}" {{ 'selected' if boutique_id == b.id }}>{{ b.nom }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="row g-2 mb-4">
+  {% for libelle, valeur in [("Chiffre d'affaires", ind.ca | fcfa),
+      ("Marge", ind.marge | fcfa), ("Nombre de ventes", ind.nb_ventes),
+      ("Pertes", ind.pertes | fcfa)] %}
+  <div class="col-6 col-lg-3">
+    <div class="card border-0 shadow-sm"><div class="card-body py-3">
+      <div class="text-muted small">{{ libelle }}</div>
+      <div class="h5 mb-0">{{ valeur }}</div>
+    </div></div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="d-flex flex-wrap gap-2">
+  <a href="{{ url_for('rapports.export', type_p='jour', fmt='xlsx',
+                      boutique=boutique_id or 'all') }}"
+     class="btn btn-outline-success">
+    <i class="bi bi-file-earmark-excel"></i> Export Excel du jour</a>
+  <a href="{{ url_for('rapports.export', type_p='jour', fmt='pdf',
+                      boutique=boutique_id or 'all') }}"
+     class="btn btn-outline-danger">
+    <i class="bi bi-file-earmark-pdf"></i> Export PDF du jour</a>
+</div>
+<p class="text-muted small mt-3">
+  Les comparaisons hebdomadaires et mensuelles sont réservées à la direction.
+</p>
+{% endblock %}

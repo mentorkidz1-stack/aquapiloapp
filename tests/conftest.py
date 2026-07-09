@@ -1,0 +1,70 @@
+"""Fixtures pytest.
+
+Règle d'or : les requêtes HTTP des clients de test s'exécutent HORS de tout
+app_context persistant (comme en production, chaque requête crée le sien).
+Les accès base dans les tests utilisent de courts `with app.app_context():`.
+"""
+import os
+import tempfile
+
+import pytest
+
+from app import create_app
+from app.extensions import db as _db
+from app.models import Boutique, Produit, User
+
+
+@pytest.fixture()
+def app():
+    fd, chemin = tempfile.mkstemp(suffix=".db")
+    os.close(fd)
+    application = create_app("dev", config_surcharges={
+        "TESTING": True,
+        "WTF_CSRF_ENABLED": False,
+        "SQLALCHEMY_DATABASE_URI": f"sqlite:///{chemin}",
+    })
+    with application.app_context():
+        _db.create_all()
+        _db.session.add_all([Boutique(nom="Boutique 1 Marché"),
+                             Boutique(nom="Boutique 2 Pavé"),
+                             Boutique(nom="Boutique 3 Chambre Froide")])
+        for username, role, mdp in [("admin", "admin", "Admin@Test1"),
+                                    ("promoteur", "promoteur", "Promo@Test1"),
+                                    ("gerant", "gerant", "Gerant@Test1"),
+                                    ("caissier", "caissier", "Caissier@Test1")]:
+            u = User(username=username, nom_complet=username.capitalize(),
+                     role=role, boutique_id=1)
+            u.set_password(mdp)
+            _db.session.add(u)
+        _db.session.add(Produit(nom="Tilapia", categorie="poisson", unite="kg",
+                                prix_achat=1500, prix_vente=1900,
+                                cmup_actuel=1500, seuil_alerte=10))
+        _db.session.commit()
+    yield application
+    os.unlink(chemin)
+
+
+def _client(app, username, mdp):
+    c = app.test_client()
+    c.post("/auth/login", data={"username": username, "password": mdp})
+    return c
+
+
+@pytest.fixture()
+def client_admin(app):
+    return _client(app, "admin", "Admin@Test1")
+
+
+@pytest.fixture()
+def client_gerant(app):
+    return _client(app, "gerant", "Gerant@Test1")
+
+
+@pytest.fixture()
+def client_caissier(app):
+    return _client(app, "caissier", "Caissier@Test1")
+
+
+@pytest.fixture()
+def client_promoteur(app):
+    return _client(app, "promoteur", "Promo@Test1")

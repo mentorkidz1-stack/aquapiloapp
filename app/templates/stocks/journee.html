@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Stocks du jour{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="h3 mb-0">Stocks journaliers</h1>
+  <form method="get" class="d-flex gap-2">
+    <select name="boutique_id" class="form-select">
+      {% for b in boutiques %}
+      <option value="{{ b.id }}" {{ 'selected' if boutique_id == b.id }}>{{ b.nom }}</option>
+      {% endfor %}
+    </select>
+    <input type="date" name="jour" value="{{ jour.isoformat() }}" class="form-control">
+    <button class="btn btn-outline-secondary">Afficher</button>
+  </form>
+</div>
+
+<p class="text-muted">
+  Situation du <strong>{{ jour.strftime("%d/%m/%Y") }}</strong> —
+  stock initial reporté automatiquement de la veille, mouvements recalculés en direct.
+</p>
+
+<form method="post" action="{{ url_for('stocks.comptage') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="jour" value="{{ jour.isoformat() }}">
+  <input type="hidden" name="boutique_id" value="{{ boutique_id }}">
+  <div class="table-responsive">
+  <table class="table table-hover bg-white shadow-sm align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Produit</th>
+        <th class="text-end">Stock initial</th>
+        <th class="text-end">Entrées</th>
+        <th class="text-end">Sorties</th>
+        <th class="text-end">Pertes</th>
+        <th class="text-end">Stock final théorique</th>
+        <th class="text-end" style="width: 130px;">Comptage physique</th>
+        <th class="text-end">Écart</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for sj in lignes %}
+      <tr>
+        <td class="fw-semibold">{{ sj.produit.nom }}
+          <small class="text-muted">({{ sj.produit.unite_affichee }})</small></td>
+        <td class="text-end">{{ sj.stock_initial }}</td>
+        <td class="text-end text-success">{{ '+' ~ sj.entrees if sj.entrees else '—' }}</td>
+        <td class="text-end text-primary">{{ '-' ~ sj.sorties if sj.sorties else '—' }}</td>
+        <td class="text-end text-danger">{{ '-' ~ sj.pertes if sj.pertes else '—' }}</td>
+        <td class="text-end fw-semibold
+            {{ 'text-danger' if sj.stock_final <= sj.produit.seuil_alerte }}">
+          {{ sj.stock_final }}
+          {% if sj.stock_final <= sj.produit.seuil_alerte %}
+            <i class="bi bi-exclamation-triangle-fill" title="Sous le seuil d'alerte"></i>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <input name="physique_{{ sj.produit_id }}" class="form-control form-control-sm text-end"
+                 inputmode="decimal" value="{{ sj.stock_physique if sj.stock_physique is not none }}">
+        </td>
+        <td class="text-end">
+          {% if sj.ecart is not none %}
+            <span class="badge bg-{{ 'success' if sj.ecart == 0 else 'warning text-dark' }}">
+              {{ '%+g' % sj.ecart }}</span>
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <button class="btn btn-primary">
+    <i class="bi bi-clipboard-check"></i> Enregistrer le comptage physique</button>
+</form>
+{% endblock %}

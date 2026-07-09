@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Journal d'audit{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Journal d'audit</h1>
+  <a href="{{ url_for('clotures.index') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Clôtures</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-8 col-md-3">
+    <select name="table" class="form-select">
+      <option value="">Toutes les tables</option>
+      {% for t in tables %}
+      <option value="{{ t }}" {{ 'selected' if table == t }}>{{ t }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-4 col-md-2">
+    <button class="btn btn-outline-secondary w-100">Filtrer</button></div>
+</form>
+
+<p class="text-muted small">200 dernières écritures{{ " — table " ~ table if table }}.</p>
+
+<div class="table-responsive">
+<table class="table table-sm table-hover bg-white shadow-sm">
+  <thead class="table-light">
+    <tr><th>Horodatage (UTC)</th><th>Utilisateur</th><th>Action</th>
+        <th>Table</th><th>ID</th><th>Détail</th></tr>
+  </thead>
+  <tbody>
+  {% for e in entrees %}
+    <tr>
+      <td class="text-nowrap">{{ e.created_at.strftime("%d/%m/%Y %H:%M:%S") }}</td>
+      <td>{{ e.user.nom_complet if e.user else "système" }}</td>
+      <td><span class="badge bg-{{ {'create':'success','update':'warning text-dark','delete':'danger'}[e.action] }}">
+        {{ e.action }}</span></td>
+      <td>{{ e.table_nom }}</td>
+      <td>{{ e.enregistrement_id }}</td>
+      <td class="small" style="max-width: 480px;">
+        {% if e.ancienne_valeur %}<div class="text-muted text-truncate"
+          title="{{ e.ancienne_valeur }}">avant : {{ e.ancienne_valeur }}</div>{% endif %}
+        {% if e.nouvelle_valeur %}<div class="text-truncate"
+          title="{{ e.nouvelle_valeur }}">après : {{ e.nouvelle_valeur }}</div>{% endif %}
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="6" class="text-center text-muted py-4">Journal vide.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

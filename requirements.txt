@@ -1,0 +1,12 @@
+Flask>=3.0
+Flask-SQLAlchemy>=3.1
+Flask-Migrate>=4.0
+Flask-Login>=0.6
+Flask-WTF>=1.2
+Flask-Bcrypt>=1.0
+python-dotenv>=1.0
+email-validator>=2.1
+openpyxl>=3.1         # exports Excel
+reportlab>=4.0        # exports PDF
+PyMySQL>=1.1          # driver MySQL (production)
+gunicorn>=22.0        # serveur WSGI (production)

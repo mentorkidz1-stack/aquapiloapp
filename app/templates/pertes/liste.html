@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Pertes / Avaries{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="h3 mb-0">Pertes / Avaries</h1>
+  <a href="{{ url_for('pertes.nouvelle') }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg"></i> Nouvelle perte</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-6 col-md-2"><input type="date" name="debut"
+       value="{{ debut.isoformat() }}" class="form-control"></div>
+  <div class="col-6 col-md-2"><input type="date" name="fin"
+       value="{{ fin.isoformat() }}" class="form-control"></div>
+  <div class="col-8 col-md-3">
+    <select name="boutique_id" class="form-select">
+      <option value="">Toutes les boutiques</option>
+      {% for b in boutiques %}
+      <option value="{{ b.id }}" {{ 'selected' if boutique_id == b.id }}>{{ b.nom }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-12 col-md-2">
+    <button class="btn btn-outline-secondary w-100">Filtrer</button></div>
+</form>
+
+<p class="text-muted">{{ pertes | length }} perte(s) —
+   Valeur totale : <strong>{{ total | fcfa }}</strong></p>
+
+<div class="table-responsive">
+<table class="table table-hover bg-white shadow-sm">
+  <thead class="table-light">
+    <tr><th>Date</th><th>Boutique</th><th>Produit</th><th class="text-end">Quantité</th>
+        <th>Motif</th><th class="text-end">Valeur (CMUP)</th><th>Saisi par</th></tr>
+  </thead>
+  <tbody>
+  {% for p in pertes %}
+    <tr>
+      <td>{{ p.date_perte.strftime("%d/%m/%Y") }}</td>
+      <td><span class="badge badge-boutique-{{ p.boutique_id }}">
+        {{ noms_boutiques.get(p.boutique_id, 'B' ~ p.boutique_id) }}</span></td>
+      <td class="fw-semibold">{{ p.produit.nom }}</td>
+      <td class="text-end">{{ p.quantite }} {{ p.produit.unite_affichee }}</td>
+      <td>{{ p.motif }}</td>
+      <td class="text-end">{{ p.valeur_perte | fcfa }}</td>
+      <td>{{ p.user.nom_complet }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="7" class="text-center text-muted py-4">
+      Aucune perte sur cette période — tant mieux !</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

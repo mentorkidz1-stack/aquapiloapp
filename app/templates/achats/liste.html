@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Achats{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="h3 mb-0">Achats / Approvisionnements</h1>
+  <a href="{{ url_for('achats.nouveau') }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg"></i> Nouvel achat
+  </a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-6 col-md-2">
+    <input type="date" name="debut" value="{{ debut.isoformat() }}" class="form-control">
+  </div>
+  <div class="col-6 col-md-2">
+    <input type="date" name="fin" value="{{ fin.isoformat() }}" class="form-control">
+  </div>
+  <div class="col-8 col-md-3">
+    <select name="produit_id" class="form-select">
+      <option value="">Tous les produits</option>
+      {% for p in produits %}
+      <option value="{{ p.id }}" {{ 'selected' if produit_id == p.id }}>{{ p.nom }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-8 col-md-3">
+    <select name="boutique_id" class="form-select">
+      <option value="">Toutes les boutiques</option>
+      {% for b in boutiques %}
+      <option value="{{ b.id }}" {{ 'selected' if boutique_id == b.id }}>{{ b.nom }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-4 col-md-2">
+    <button class="btn btn-outline-secondary w-100">Filtrer</button>
+  </div>
+</form>
+
+<p class="text-muted">
+  {{ achats | length }} achat(s) du {{ debut.strftime("%d/%m/%Y") }} au
+  {{ fin.strftime("%d/%m/%Y") }} — Total : <strong>{{ total | fcfa }}</strong>
+</p>
+
+<div class="table-responsive">
+<table class="table table-hover bg-white shadow-sm">
+  <thead class="table-light">
+    <tr>
+      <th>Date</th>
+      <th>Boutique</th>
+      <th>Produit</th>
+      <th class="text-end">Quantité</th>
+      <th class="text-end">Prix unitaire</th>
+      <th class="text-end">Montant</th>
+      <th class="text-end">CMUP après</th>
+      <th>Fournisseur</th>
+      <th>Saisi par</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for a in achats %}
+    <tr>
+      <td>{{ a.date_achat.strftime("%d/%m/%Y") }}</td>
+      <td><span class="badge badge-boutique-{{ a.boutique_id }}">
+        {{ noms_boutiques.get(a.boutique_id, 'B' ~ a.boutique_id) }}</span></td>
+      <td class="fw-semibold">{{ a.produit.nom }}</td>
+      <td class="text-end">{{ a.quantite }} {{ a.produit.unite_affichee }}</td>
+      <td class="text-end">{{ a.prix_unitaire | fcfa }}</td>
+      <td class="text-end">{{ a.montant_total | fcfa }}</td>
+      <td class="text-end">{{ a.cmup_apres | fcfa }}</td>
+      <td>{{ a.fournisseur or "—" }}</td>
+      <td>{{ a.user.nom_complet }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="9" class="text-center text-muted py-4">
+      Aucun achat sur cette période.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

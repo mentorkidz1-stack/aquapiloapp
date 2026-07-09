@@ -1,0 +1,19 @@
+# /etc/systemd/system/poissonnerie.service
+[Unit]
+Description=Poissonnerie - application Flask (Gunicorn)
+After=network.target mysql.service
+
+[Service]
+User=poissonnerie
+Group=poissonnerie
+WorkingDirectory=/opt/poissonnerie
+Environment="FLASK_ENV=prod"
+ExecStart=/opt/poissonnerie/venv/bin/gunicorn wsgi:app \
+    --workers 3 --bind 127.0.0.1:8000 \
+    --access-logfile /var/log/poissonnerie/access.log \
+    --error-logfile /var/log/poissonnerie/error.log
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

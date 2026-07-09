@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle perte{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">Déclarer une perte / avarie</h1>
+<div class="card border-0 shadow-sm" style="max-width: 560px;">
+  <div class="card-body">
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {% for champ in [form.produit_id, form.quantite, form.motif, form.date_perte] %}
+      <div class="mb-3">
+        {{ champ.label(class="form-label") }}
+        {{ champ(class=("form-select" if champ.type == "SelectField" else "form-control")
+                 + (" is-invalid" if champ.errors else "")) }}
+        {% for err in champ.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+      <div class="alert alert-info small">
+        <i class="bi bi-info-circle"></i>
+        La valeur de la perte sera calculée automatiquement au CMUP actuel du produit.
+      </div>
+      <div class="d-flex gap-2">
+        {{ form.submit(class="btn btn-primary") }}
+        <a href="{{ url_for('pertes.liste') }}" class="btn btn-outline-secondary">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

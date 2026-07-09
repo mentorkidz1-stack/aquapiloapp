@@ -1,0 +1,182 @@
+/* ==========================================================
+   Thème POISSONNERIE DONA — bleu marine + menu latéral vertical
+   (les variables ci-dessous pilotent toute la couleur de l'app)
+   ========================================================== */
+:root {
+  --rose: #1f4e79;          /* couleur principale : bleu marine */
+  --rose-fonce: #163a5c;    /* survol / dégradé */
+  --rose-tres-fonce: #0f2a44;
+  --rose-clair: #eaf1f8;    /* fonds légers */
+}
+
+/* ---------- Menu latéral ---------- */
+.menu-lateral {
+  width: 250px;
+  background: linear-gradient(180deg, var(--rose) 0%, var(--rose-tres-fonce) 100%);
+}
+@media (min-width: 992px) {
+  .menu-lateral {
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    z-index: 1030;
+  }
+  main.contenu { margin-left: 250px; }
+}
+main.contenu.sans-menu { margin-left: 0; }
+
+.barre-mobile { background: var(--rose); }
+
+.menu-lateral .marque { background: rgba(0, 0, 0, .12); }
+.menu-lateral .nav-link {
+  color: rgba(255, 255, 255, .85);
+  border-radius: 8px;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+.menu-lateral .nav-link:hover,
+.menu-lateral .nav-link:focus {
+  color: #fff;
+  background: rgba(255, 255, 255, .15);
+}
+.menu-lateral .bloc-utilisateur {
+  background: rgba(0, 0, 0, .15);
+}
+.menu-lateral .bloc-utilisateur .nav-link { color: rgba(255,255,255,.85); }
+.offcanvas-lg.menu-lateral.show,
+.offcanvas-lg.menu-lateral.showing {
+  background: linear-gradient(180deg, var(--rose) 0%, var(--rose-tres-fonce) 100%);
+}
+
+/* ---------- Le bleu Bootstrap devient rose ---------- */
+.btn-primary {
+  --bs-btn-bg: var(--rose);
+  --bs-btn-border-color: var(--rose);
+  --bs-btn-hover-bg: var(--rose-fonce);
+  --bs-btn-hover-border-color: var(--rose-fonce);
+  --bs-btn-active-bg: var(--rose-tres-fonce);
+  --bs-btn-active-border-color: var(--rose-tres-fonce);
+  --bs-btn-disabled-bg: var(--rose);
+  --bs-btn-disabled-border-color: var(--rose);
+}
+.btn-outline-primary {
+  --bs-btn-color: var(--rose);
+  --bs-btn-border-color: var(--rose);
+  --bs-btn-hover-bg: var(--rose);
+  --bs-btn-hover-border-color: var(--rose);
+  --bs-btn-active-bg: var(--rose-fonce);
+  --bs-btn-active-border-color: var(--rose-fonce);
+}
+.text-primary { color: var(--rose) !important; }
+.bg-primary { background-color: var(--rose) !important; }
+.badge.bg-primary { background-color: var(--rose) !important; }
+.form-check-input:checked {
+  background-color: var(--rose);
+  border-color: var(--rose);
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--rose);
+  box-shadow: 0 0 0 .25rem rgba(31, 78, 121, .25);
+}
+a { color: var(--rose); }
+a:hover { color: var(--rose-fonce); }
+.nav-pills .nav-link.active { background-color: var(--rose); }
+.table-info {
+  --bs-table-bg: var(--rose-clair);
+}
+
+/* ---------- Confort mobile (les vendeurs sont sur téléphone) ---------- */
+@media (max-width: 576px) {
+  .form-control, .btn { min-height: 44px; }
+}
+.table td, .table th { vertical-align: middle; }
+
+/* ---------- Badges par boutique (repérage visuel immédiat) ---------- */
+.badge-boutique-1 { background-color: var(--rose); color: #fff; }
+.badge-boutique-2 { background-color: #157347; color: #fff; }   /* vert */
+.badge-boutique-3 { background-color: #b02a37; color: #fff; }   /* rouge */
+
+/* ---------- Bandeau défilant date/heure ---------- */
+.bandeau-info {
+  background: var(--rose-tres-fonce);
+  color: #fff;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: .95rem;
+  line-height: 2.1;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+.bandeau-piste {
+  display: inline-flex;
+  animation: defilement 25s linear infinite;
+}
+.bandeau-texte { padding-right: 3rem; }
+@keyframes defilement {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bandeau-piste { animation: none; }
+}
+
+/* ---------- Actions du bandeau (coin supérieur droit) ---------- */
+.bandeau-defile { overflow: hidden; white-space: nowrap; }
+.bandeau-actions {
+  background: rgba(0, 0, 0, .25);
+  align-self: stretch;
+}
+.btn-deconnexion {
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, .5);
+}
+.btn-deconnexion:hover {
+  background: #fff;
+  color: var(--rose-tres-fonce);
+}
+
+/* ---------- Page de connexion ---------- */
+.zone-publique { padding: 0; }
+.zone-publique .alert {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  min-width: 320px;
+  max-width: 90vw;
+  box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .2);
+}
+.connexion-page { min-height: 100vh; }
+.panneau-marque {
+  width: 52%;
+  color: #fff;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(255, 255, 255, .10) 0 180px, transparent 181px),
+    radial-gradient(circle at 10% 90%, rgba(255, 255, 255, .07) 0 260px, transparent 261px),
+    linear-gradient(135deg, var(--rose) 0%, var(--rose-tres-fonce) 100%);
+}
+.panneau-marque .avantages li {
+  margin-bottom: .9rem;
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+}
+.panneau-marque .avantages i {
+  background: rgba(255, 255, 255, .15);
+  border-radius: 10px;
+  padding: .45rem .6rem;
+  font-size: 1.1rem;
+}
+.panneau-formulaire { background: #f4f6f9; }
+.carte-connexion {
+  border-radius: 16px;
+  box-shadow: 0 1rem 3rem rgba(15, 42, 68, .12);
+}
+.carte-connexion .input-group-text {
+  background: var(--rose-clair);
+  color: var(--rose);
+  border-right: 0;
+}

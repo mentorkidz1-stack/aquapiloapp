@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Historique des prix — {{ produit.nom }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Historique des prix — {{ produit.nom }}</h1>
+  <a href="{{ url_for('produits.liste') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Retour</a>
+</div>
+
+<div class="table-responsive">
+<table class="table table-hover bg-white shadow-sm" style="max-width: 800px;">
+  <thead class="table-light">
+    <tr>
+      <th>Date d'effet</th>
+      <th>Type</th>
+      <th class="text-end">Ancien prix</th>
+      <th class="text-end">Nouveau prix</th>
+      <th>Modifié par</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for h in historique %}
+    <tr>
+      <td>{{ h.date_effet.strftime("%d/%m/%Y") }}</td>
+      <td>
+        <span class="badge bg-{{ 'info' if h.type_prix == 'achat' else 'primary' }}">
+          Prix {{ 'd\'achat' if h.type_prix == 'achat' else 'de vente' }}
+        </span>
+      </td>
+      <td class="text-end">{{ h.ancien_prix | fcfa }}</td>
+      <td class="text-end fw-semibold">{{ h.nouveau_prix | fcfa }}</td>
+      <td>{{ h.user.nom_complet }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="5" class="text-center text-muted py-4">
+      Aucun changement de prix enregistré.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Produits{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="h3 mb-0">Produits</h1>
+  <a href="{{ url_for('produits.nouveau') }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg"></i> Nouveau produit
+  </a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-12 col-md-4">
+    <input type="search" name="q" value="{{ q }}" class="form-control"
+           placeholder="Rechercher un produit...">
+  </div>
+  <div class="col-8 col-md-3">
+    <select name="categorie" class="form-select">
+      <option value="">Toutes catégories</option>
+      <option value="poisson" {{ 'selected' if categorie == 'poisson' }}>Poissons</option>
+      <option value="viande" {{ 'selected' if categorie == 'viande' }}>Viandes / Volaille</option>
+    </select>
+  </div>
+  <div class="col-8 col-md-3">
+    <select name="boutique_id" class="form-select">
+      <option value="">Stock : toutes les boutiques</option>
+      {% for b in boutiques %}
+      <option value="{{ b.id }}" {{ 'selected' if boutique_id == b.id }}>
+        Stock : {{ b.nom }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-4 col-md-2">
+    <button class="btn btn-outline-secondary w-100">Filtrer</button>
+  </div>
+</form>
+
+<div class="table-responsive">
+<table class="table table-hover bg-white shadow-sm">
+  <thead class="table-light">
+    <tr>
+      <th>Produit</th>
+      <th>Catégorie</th>
+      <th>Unité</th>
+      <th class="text-end">Prix achat</th>
+      <th class="text-end">Prix vente</th>
+      <th class="text-end">CMUP</th>
+      <th class="text-end">Stock
+        {% if boutique_id %}
+          {% for b in boutiques %}{% if b.id == boutique_id %}
+          <span class="badge badge-boutique-{{ b.id }}">{{ b.nom }}</span>
+          {% endif %}{% endfor %}
+        {% else %}<span class="badge bg-secondary">consolidé</span>{% endif %}
+      </th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for p in produits %}
+    <tr class="{{ 'table-secondary text-muted' if not p.actif }}">
+      <td class="fw-semibold">{{ p.nom }}
+        {% if not p.actif %}<span class="badge bg-secondary">inactif</span>{% endif %}
+      </td>
+      <td>{{ 'Poisson' if p.categorie == 'poisson' else 'Viande' }}</td>
+      <td>{{ p.unite_affichee }}</td>
+      <td class="text-end">{{ p.prix_achat | fcfa }}</td>
+      <td class="text-end">{{ p.prix_vente | fcfa }}</td>
+      <td class="text-end">{{ p.cmup_actuel | fcfa }}</td>
+      <td class="text-end">
+        {% set stock = stocks[p.id] %}
+        {% if stock <= p.seuil_alerte %}
+          <span class="badge bg-danger">{{ stock }} {{ p.unite_affichee }}</span>
+        {% else %}
+          {{ stock }} {{ p.unite_affichee }}
+        {% endif %}
+      </td>
+      <td class="text-end text-nowrap">
+        <a href="{{ url_for('produits.historique_prix', produit_id=p.id) }}"
+           class="btn btn-sm btn-outline-secondary" title="Historique des prix">
+          <i class="bi bi-clock-history"></i></a>
+        <a href="{{ url_for('produits.modifier', produit_id=p.id) }}"
+           class="btn btn-sm btn-outline-primary" title="Modifier">
+          <i class="bi bi-pencil"></i></a>
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="8" class="text-center text-muted py-4">Aucun produit.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Clôtures{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Clôtures de périodes</h1>
+
+<div class="alert alert-secondary small">
+  <i class="bi bi-lock"></i>
+  Une période clôturée est <strong>verrouillée côté serveur</strong> : plus aucune
+  vente, achat, perte ou comptage ne peut y être ajouté ou modifié.
+  Seul un administrateur peut rouvrir, avec un motif obligatoire et une trace.
+</div>
+
+<div class="card border-0 shadow-sm mb-4" style="max-width: 640px;">
+  <div class="card-body">
+    <h2 class="h6 mb-3">Clôturer une période</h2>
+    <form method="post" class="row g-2" id="form-cloture">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if current_user.is_gerant %}
+      <div class="col-12 col-md-4">
+        <select name="boutique_id" class="form-select">
+          {% for b in boutiques %}
+          <option value="{{ b.id }}">{{ b.nom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <div class="col-12 col-md-4">
+        <input type="date" name="jour" class="form-control"
+               value="{{ aujourdhui.isoformat() }}" required>
+      </div>
+      <div class="col-12 col-md-8 d-flex flex-wrap gap-2">
+        <button class="btn btn-primary" formaction="{{ url_for('clotures.jour') }}">
+          <i class="bi bi-lock"></i> Clôturer le jour</button>
+        {% if current_user.is_gerant %}
+        <button class="btn btn-outline-primary" formaction="{{ url_for('clotures.semaine') }}"
+                onclick="return confirm('Clôturer toute la semaine contenant cette date ?');">
+          Clôturer la semaine</button>
+        {% endif %}
+        {% if current_user.is_direction %}
+        <button class="btn btn-outline-primary" formaction="{{ url_for('clotures.mois') }}"
+                onclick="return confirm('Clôturer tout le mois contenant cette date ?');">
+          Clôturer le mois</button>
+        {% endif %}
+      </div>
+      <div class="form-text">
+        Semaine : lundi → dimanche, les jours sans activité (dimanche fermé...)
+        sont clôturés automatiquement. Mois : tous les jours doivent être clôturés.
+      </div>
+    </form>
+  </div>
+</div>
+
+<h2 class="h5">Historique des clôtures</h2>
+<div class="table-responsive">
+<table class="table table-hover bg-white shadow-sm align-middle">
+  <thead class="table-light">
+    <tr><th>Type</th><th>Boutique</th><th>Période</th>
+        {% if current_user.peut_voir_rapport_journalier %}
+        <th class="text-end">CA</th><th class="text-end">Marge</th>
+        {% endif %}
+        <th class="text-end">Ventes</th>
+        <th>Statut</th><th>Par</th><th></th></tr>
+  </thead>
+  <tbody>
+  {% for c in clotures %}
+    {% set s = c.snapshot %}
+    <tr>
+      <td><span class="badge bg-{{ {'jour':'primary','semaine':'info','mois':'dark'}[c.type_periode] }}">
+        {{ c.type_periode }}</span>
+        {% if c.sans_activite %}<span class="badge bg-light text-muted">sans activité</span>{% endif %}
+      </td>
+      <td class="small">{{ noms_boutiques.get(c.boutique_id, '?') }}</td>
+      <td>{{ c.periode_debut.strftime("%d/%m/%Y") }}
+        {% if c.periode_fin != c.periode_debut %} → {{ c.periode_fin.strftime("%d/%m/%Y") }}{% endif %}
+      </td>
+      {% if current_user.peut_voir_rapport_journalier %}
+      <td class="text-end">{{ (s.get('ca', 0)) | fcfa }}</td>
+      <td class="text-end">{{ (s.get('marge', 0)) | fcfa }}</td>
+      {% endif %}
+      <td class="text-end">{{ s.get('nb_ventes', 0) }}</td>
+      <td>
+        {% if c.statut == 'cloture' %}
+          <span class="badge bg-success"><i class="bi bi-lock-fill"></i> Clôturée</span>
+        {% else %}
+          <span class="badge bg-warning text-dark"><i class="bi bi-unlock"></i> Rouverte</span>
+          {% if c.reouvertures %}
+          <div class="small text-muted">par {{ c.reouvertures[0].user.nom_complet }} :
+            « {{ c.reouvertures[0].motif }} »</div>
+          {% endif %}
+        {% endif %}
+      </td>
+      <td>{{ c.user.nom_complet }}</td>
+      <td class="text-end">
+        {% if c.statut == 'cloture' and current_user.is_direction %}
+        <form method="post" action="{{ url_for('clotures.reouvrir', cloture_id=c.id) }}"
+              class="d-inline"
+              onsubmit="const m = prompt('Motif de la réouverture (obligatoire) :');
+                        if (!m) return false;
+                        this.querySelector('[name=motif]').value = m; return true;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="motif" value="">
+          <button class="btn btn-sm btn-outline-warning" title="Rouvrir (admin)">
+            <i class="bi bi-unlock"></i></button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="9" class="text-center text-muted py-4">Aucune clôture.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if current_user.is_direction %}
+<a href="{{ url_for('clotures.audit') }}" class="btn btn-outline-secondary btn-sm">
+  <i class="bi bi-journal-text"></i> Journal d'audit</a>
+{% endif %}
+{% endblock %}

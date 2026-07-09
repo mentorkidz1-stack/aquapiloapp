@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Caisse{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <i class="bi bi-water text-primary" style="font-size: 3rem;"></i>
+  <h1 class="h3 mt-2 mb-1">Bonjour {{ current_user.nom_complet }} !</h1>
+  <p class="text-muted mb-4">{{ current_user.boutique.nom }} —
+    {{ aujourdhui.strftime("%d/%m/%Y") }}</p>
+
+  <a href="{{ url_for('ventes.caisse') }}"
+     class="btn btn-primary btn-lg px-5 py-3 mb-3">
+    <i class="bi bi-cash-register"></i> Ouvrir la caisse
+  </a>
+
+  <div>
+    <form method="post" action="{{ url_for('clotures.jour') }}" class="d-inline"
+          onsubmit="return confirm('Clôturer votre journée ? Plus aucune vente ne pourra être enregistrée aujourd\\'hui dans votre boutique.');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="jour" value="{{ aujourdhui.isoformat() }}">
+      <button class="btn btn-outline-secondary">
+        <i class="bi bi-lock"></i> Clôturer ma journée</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

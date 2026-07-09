@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ticket {{ vente.numero_ticket }}</title>
+  <style>
+    /* ===== Gabarit thermique 58 mm (zone imprimable ~48 mm, ~32 car./ligne) ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11px;
+      line-height: 1.35;
+      background: #e9ecef;
+    }
+    .ticket {
+      width: 48mm;
+      margin: 16px auto;
+      padding: 3mm 1.5mm;
+      background: #fff;
+    }
+    .center { text-align: center; }
+    .bold { font-weight: bold; }
+    .sep { border-top: 1px dashed #000; margin: 4px 0; }
+    .ligne-produit { margin-top: 2px; }
+    .ligne-detail {
+      display: flex;
+      justify-content: space-between;
+    }
+    .total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: bold;
+      margin: 4px 0;
+    }
+    .footer { margin-top: 6px; font-size: 10px; }
+
+    /* Barre d'actions — jamais imprimée */
+    .actions {
+      text-align: center;
+      margin: 16px auto;
+      font-family: system-ui, sans-serif;
+    }
+    .actions button, .actions a {
+      display: inline-block;
+      padding: 12px 24px;
+      margin: 0 4px;
+      font-size: 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-print { background: #1f4e79; color: #fff; }
+    .btn-back { background: #6c757d; color: #fff; }
+    .demo-banner {
+      max-width: 320px;
+      margin: 12px auto;
+      padding: 8px 12px;
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 6px;
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media print {
+      @page { size: 58mm auto; margin: 0; }
+      body { background: #fff; }
+      .ticket { width: 48mm; margin: 0 auto; padding: 2mm 1mm; }
+      .actions, .demo-banner { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+{% if demo %}
+<div class="demo-banner">
+  Ticket de démonstration — sert à tester le rendu sur l'imprimante thermique 58 mm.
+</div>
+{% endif %}
+
+<div class="ticket">
+  {% if annulee %}
+  <div class="center bold" style="font-size: 14px; border: 2px solid #000; padding: 2px; margin-bottom: 4px;">
+    *** VENTE ANNULÉE ***
+  </div>
+  {% endif %}
+  <div class="center bold" style="font-size: 13px;">POISSONNERIE DONA</div>
+  <div class="center">{{ vente.boutique or "Cotonou — Bénin" }}</div>
+  <div class="sep"></div>
+
+  <div>Ticket : {{ vente.numero_ticket }}</div>
+  <div>{{ vente.date_heure.strftime("%d/%m/%Y %H:%M") }}</div>
+  <div>Vendeur : {{ vente.vendeur }}</div>
+  <div class="sep"></div>
+
+  {% for ligne in vente.lignes %}
+  <div class="ligne-produit bold">{{ ligne.produit }}</div>
+  <div class="ligne-detail">
+    <span>{{ ligne.quantite }} x {{ "{:,}".format(ligne.prix).replace(",", " ") }}</span>
+    <span>{{ "{:,}".format(ligne.montant).replace(",", " ") }} F</span>
+  </div>
+  {% endfor %}
+
+  <div class="sep"></div>
+  <div class="total">
+    <span>TOTAL</span>
+    <span>{{ "{:,}".format(vente.montant_total).replace(",", " ") }} FCFA</span>
+  </div>
+  <div>Paiement : {{ vente.mode_paiement }}</div>
+  <div class="sep"></div>
+
+  <div class="center footer">
+    Merci de votre visite !<br>
+    À bientôt
+  </div>
+</div>
+
+<div class="actions">
+  <button class="btn-print" onclick="window.print()">Imprimer le ticket</button>
+  <a class="btn-back" href="{{ url_for('ventes.journal') if not demo else url_for('main.dashboard') }}">Retour</a>
+</div>
+
+</body>
+</html>
