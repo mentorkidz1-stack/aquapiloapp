@@ -8,9 +8,13 @@ UNITES = ("kg", "piece")
 
 class Produit(db.Model):
     __tablename__ = "produits"
+    __table_args__ = (
+        db.UniqueConstraint("entreprise_id", "nom", name="uq_produit_entreprise_nom"),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
-    nom = db.Column(db.String(80), unique=True, nullable=False, index=True)
+    nom = db.Column(db.String(80), nullable=False, index=True)
+    entreprise_id = db.Column(db.Integer, db.ForeignKey("entreprises.id"), nullable=False)
     categorie = db.Column(db.Enum(*CATEGORIES, name="categorie_enum"), nullable=False)
     # L'unité gouverne toute la chaîne : achat, stock et vente (décision Phase 0)
     unite = db.Column(db.Enum(*UNITES, name="unite_enum"), nullable=False, default="kg")
@@ -22,6 +26,7 @@ class Produit(db.Model):
     created_at = db.Column(db.DateTime, nullable=False,
                            default=lambda: datetime.now(timezone.utc))
 
+    entreprise = db.relationship("Entreprise", back_populates="produits")
     achats = db.relationship("Achat", back_populates="produit", lazy="dynamic")
     historique_prix = db.relationship("PrixHistorique", back_populates="produit",
                                       lazy="dynamic",

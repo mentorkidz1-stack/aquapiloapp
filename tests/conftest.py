@@ -11,7 +11,7 @@ import pytest
 
 from app import create_app
 from app.extensions import db as _db
-from app.models import Boutique, Produit, User
+from app.models import Boutique, Entreprise, Produit, User
 
 
 @pytest.fixture()
@@ -25,20 +25,24 @@ def app():
     })
     with application.app_context():
         _db.create_all()
-        _db.session.add_all([Boutique(nom="Boutique 1 Marché"),
-                             Boutique(nom="Boutique 2 Pavé"),
-                             Boutique(nom="Boutique 3 Chambre Froide")])
+        entreprise = Entreprise(nom="DONA", statut_abonnement="actif")
+        _db.session.add(entreprise)
+        _db.session.flush()
+        _db.session.add_all([Boutique(nom="Boutique 1 Marché", entreprise_id=entreprise.id),
+                             Boutique(nom="Boutique 2 Pavé", entreprise_id=entreprise.id),
+                             Boutique(nom="Boutique 3 Chambre Froide", entreprise_id=entreprise.id)])
         for username, role, mdp in [("admin", "admin", "Admin@Test1"),
                                     ("promoteur", "promoteur", "Promo@Test1"),
                                     ("gerant", "gerant", "Gerant@Test1"),
                                     ("caissier", "caissier", "Caissier@Test1")]:
             u = User(username=username, nom_complet=username.capitalize(),
-                     role=role, boutique_id=1)
+                     role=role, boutique_id=1, entreprise_id=entreprise.id)
             u.set_password(mdp)
             _db.session.add(u)
         _db.session.add(Produit(nom="Tilapia", categorie="poisson", unite="kg",
                                 prix_achat=1500, prix_vente=1900,
-                                cmup_actuel=1500, seuil_alerte=10))
+                                cmup_actuel=1500, seuil_alerte=10,
+                                entreprise_id=entreprise.id))
         _db.session.commit()
     yield application
     os.unlink(chemin)

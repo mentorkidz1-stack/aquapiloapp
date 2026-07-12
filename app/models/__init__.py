@@ -1,4 +1,5 @@
 """Import centralisé des modèles (nécessaire pour Alembic autogenerate)."""
+from app.models.entreprise import Entreprise
 from app.models.boutique import Boutique
 from app.models.user import User
 from app.models.produit import Produit, PrixHistorique
@@ -9,6 +10,6 @@ from app.models.stock_journalier import StockJournalier
 from app.models.cloture import Cloture, Reouverture
 from app.models.audit import AuditLog
 
-__all__ = ["Boutique", "User", "Produit", "PrixHistorique", "Achat",
+__all__ = ["Entreprise", "Boutique", "User", "Produit", "PrixHistorique", "Achat",
            "Vente", "VenteLigne", "Perte", "StockJournalier",
            "Cloture", "Reouverture", "AuditLog"]

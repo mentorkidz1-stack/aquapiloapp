@@ -29,6 +29,7 @@ class User(UserMixin, db.Model):
     boutique_id = db.Column(
         db.Integer, db.ForeignKey("boutiques.id"), nullable=False, default=1
     )
+    entreprise_id = db.Column(db.Integer, db.ForeignKey("entreprises.id"), nullable=False)
     # Verrou direction : accès du GÉRANT au rapport des ventes journalier
     acces_rapport_journalier = db.Column(db.Boolean, nullable=False, default=True)
     created_at = db.Column(
@@ -37,6 +38,7 @@ class User(UserMixin, db.Model):
     )
 
     boutique = db.relationship("Boutique", back_populates="users")
+    entreprise = db.relationship("Entreprise", back_populates="users")
 
     # ---------- Mot de passe ----------
     def set_password(self, mot_de_passe: str) -> None:
