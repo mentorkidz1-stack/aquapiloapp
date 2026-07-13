@@ -8,6 +8,7 @@ class AuditLog(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    entreprise_id = db.Column(db.Integer, db.ForeignKey("entreprises.id"), nullable=False)
     action = db.Column(db.Enum("create", "update", "delete", name="action_enum"),
                        nullable=False)
     table_nom = db.Column(db.String(50), nullable=False, index=True)

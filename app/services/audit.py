@@ -56,6 +56,27 @@ def _user_id():
     return None
 
 
+def _entreprise_id_de(obj):
+    """Entreprise propriétaire de l'objet audité — directe, ou via son
+    parent pour les tables sans colonne entreprise_id propre (VenteLigne,
+    PrixHistorique, Reouverture). Recherche le parent par identifiant
+    (session.get, prioritairement servi par la carte d'identité déjà en
+    mémoire) plutôt que par la relation ORM, pour rester fiable même
+    pendant un flush en cours."""
+    if hasattr(obj, "entreprise_id"):
+        return obj.entreprise_id
+    from app.models import Cloture, Produit, Vente
+    for colonne_fk, modele_parent in (("vente_id", Vente),
+                                      ("produit_id", Produit),
+                                      ("cloture_id", Cloture)):
+        valeur = getattr(obj, colonne_fk, None)
+        if valeur is not None:
+            parent = db.session.get(modele_parent, valeur)
+            if parent is not None:
+                return parent.entreprise_id
+    return None
+
+
 _initialise = False
 
 
@@ -88,7 +109,8 @@ def init_audit():
         for obj in session.new:
             if isinstance(obj, TABLES_AUDITEES):
                 lignes.append({
-                    "user_id": uid, "action": "create",
+                    "user_id": uid, "entreprise_id": _entreprise_id_de(obj),
+                    "action": "create",
                     "table_nom": obj.__tablename__,
                     "enregistrement_id": obj.id,
                     "ancienne_valeur": None,
@@ -97,7 +119,8 @@ def init_audit():
                 })
         for action, obj, anciennes, nouvelles in session.info.pop("_audit", []):
             lignes.append({
-                "user_id": uid, "action": action,
+                "user_id": uid, "entreprise_id": _entreprise_id_de(obj),
+                "action": action,
                 "table_nom": obj.__tablename__,
                 "enregistrement_id": obj.id,
                 "ancienne_valeur": json.dumps(anciennes, ensure_ascii=False)

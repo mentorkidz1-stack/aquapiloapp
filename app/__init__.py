@@ -60,6 +60,11 @@ def create_app(config_name: str | None = None,
     from app.services.audit import init_audit
     init_audit()
 
+    # Isolation multi-tenant : filtre automatique + auto-marquage + garde-fous
+    from app.services.tenant import init_tenant_context, init_isolation
+    init_tenant_context(app)
+    init_isolation()
+
     # Pages d'erreur
     @app.errorhandler(403)
     def forbidden(_e):

@@ -11,6 +11,7 @@ class Perte(db.Model):
                            nullable=False, index=True)
     boutique_id = db.Column(db.Integer, db.ForeignKey("boutiques.id"),
                             nullable=False, default=1)
+    entreprise_id = db.Column(db.Integer, db.ForeignKey("entreprises.id"), nullable=False)
     quantite = db.Column(db.Numeric(10, 3), nullable=False)
     motif = db.Column(db.String(200), nullable=False)
     valeur_perte = db.Column(db.Integer, nullable=False)  # quantité x CMUP au moment

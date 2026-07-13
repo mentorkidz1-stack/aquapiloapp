@@ -7,11 +7,12 @@ from app.models import Perte, Produit, User
 from app.services.cmup import enregistrer_achat
 from app.services.stocks import (actualiser_stocks_du_jour,
                                  stock_debut_de_journee)
+from tests.conftest import contexte_dona
 
 
 def test_stock_final_et_report(app):
     hier = date.today() - timedelta(days=1)
-    with app.app_context():
+    with contexte_dona(app):
         produit = Produit.query.filter_by(nom="Tilapia").first()
         admin = User.query.filter_by(username="admin").first()
         enregistrer_achat(produit, Decimal("30"), 1500, None, hier, admin.id)
@@ -32,7 +33,7 @@ def test_stock_final_et_report(app):
 
 
 def test_ecart_inventaire(app, client_gerant):
-    with app.app_context():
+    with contexte_dona(app):
         produit = Produit.query.filter_by(nom="Tilapia").first()
         admin = User.query.filter_by(username="admin").first()
         enregistrer_achat(produit, Decimal("10"), 1500, None,
@@ -45,7 +46,7 @@ def test_ecart_inventaire(app, client_gerant):
         f"physique_{produit_id}": "9,5",
     })
 
-    with app.app_context():
+    with contexte_dona(app):
         lignes = actualiser_stocks_du_jour(date.today())
         sj = next(l for l in lignes if l.produit_id == produit_id)
         assert sj.stock_physique == Decimal("9.5")

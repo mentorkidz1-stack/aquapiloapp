@@ -7,7 +7,7 @@ Usage : python seed_produits.py
 """
 from app import create_app
 from app.extensions import db
-from app.models import Produit
+from app.models import Entreprise, Produit
 
 # (nom, catégorie, unité, prix_achat, prix_vente) — FCFA / unité
 PRODUITS = [
@@ -45,14 +45,21 @@ PRODUITS = [
 
 app = create_app()
 with app.app_context():
+    entreprise = Entreprise.query.filter_by(nom="DONA").first()
+    if entreprise is None:
+        raise SystemExit("Entreprise DONA introuvable : lancez d'abord seed.py")
+
     crees = 0
     for nom, categorie, unite, pa, pv in PRODUITS:
-        if Produit.query.filter_by(nom=nom).first() is None:
+        existant = Produit.query.filter_by(
+            nom=nom, entreprise_id=entreprise.id).first()
+        if existant is None:
             db.session.add(Produit(
                 nom=nom, categorie=categorie, unite=unite,
                 prix_achat=pa, prix_vente=pv,
                 cmup_actuel=pa,      # avant tout achat, le CMUP démarre au prix d'achat
                 seuil_alerte=10,
+                entreprise_id=entreprise.id,
             ))
             crees += 1
     db.session.commit()

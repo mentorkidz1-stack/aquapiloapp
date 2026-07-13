@@ -6,10 +6,11 @@ from decimal import Decimal
 from app.extensions import db
 from app.models import Achat, Cloture, Perte, Produit, User, Vente
 from app.services.cmup import enregistrer_achat
+from tests.conftest import contexte_dona
 
 
 def _preparer(app):
-    with app.app_context():
+    with contexte_dona(app):
         produit = Produit.query.filter_by(nom="Tilapia").first()
         admin = User.query.filter_by(username="admin").first()
         enregistrer_achat(produit, Decimal("50"), 1500, None,

@@ -76,4 +76,10 @@ class User(UserMixin, db.Model):
 
 @login_manager.user_loader
 def load_user(user_id: str):
-    return db.session.get(User, int(user_id))
+    # Rechargement de l'utilisateur depuis le cookie de session : appelé
+    # avant que g.entreprise_id soit résolu (avant_request en dépend via
+    # current_user.entreprise_id), donc nécessairement cross-tenant par id,
+    # comme la recherche par username à la connexion (cf. auth/routes.py).
+    from app.services.tenant import sans_filtre_tenant
+    with sans_filtre_tenant():
+        return db.session.get(User, int(user_id))

@@ -3,15 +3,33 @@
 Règle d'or : les requêtes HTTP des clients de test s'exécutent HORS de tout
 app_context persistant (comme en production, chaque requête crée le sien).
 Les accès base dans les tests utilisent de courts `with app.app_context():`.
+
+Pour les tests qui appellent des services directement (hors client HTTP),
+utiliser `with contexte_dona(app):` plutôt que `with app.app_context():`
+dès qu'un objet rattaché à une entreprise (Achat, Vente, Perte,
+StockJournalier, Cloture...) est créé : le mécanisme d'isolation
+multi-tenant (app/services/tenant.py) a besoin d'un contexte de requête
+avec g.entreprise_id positionné pour marquer automatiquement ces objets.
 """
 import os
 import tempfile
+from contextlib import contextmanager
 
 import pytest
+from flask import g
 
 from app import create_app
 from app.extensions import db as _db
 from app.models import Boutique, Entreprise, Produit, User
+
+
+@contextmanager
+def contexte_dona(app):
+    """Contexte de requête minimal avec le tenant DONA actif, pour les
+    appels directs aux services (hors client HTTP)."""
+    with app.test_request_context():
+        g.entreprise_id = Entreprise.query.filter_by(nom="DONA").first().id
+        yield
 
 
 @pytest.fixture()
@@ -45,6 +63,9 @@ def app():
                                 entreprise_id=entreprise.id))
         _db.session.commit()
     yield application
+    with application.app_context():
+        _db.session.remove()
+        _db.engine.dispose()
     os.unlink(chemin)
 
 

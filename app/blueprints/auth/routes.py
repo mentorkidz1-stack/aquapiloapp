@@ -6,6 +6,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 
 from app.blueprints.auth.forms import LoginForm
 from app.models import User
+from app.services.tenant import sans_filtre_tenant
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -17,7 +18,11 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data.strip()).first()
+        # Avant authentification, l'entreprise de l'utilisateur n'est pas
+        # encore connue : recherche volontairement cross-tenant par
+        # username, via le bypass explicite (cf. app/services/tenant.py).
+        with sans_filtre_tenant():
+            user = User.query.filter_by(username=form.username.data.strip()).first()
         if user and user.actif and user.check_password(form.password.data):
             login_user(user, remember=form.remember.data)
             flash(f"Bienvenue, {user.nom_complet} !", "success")

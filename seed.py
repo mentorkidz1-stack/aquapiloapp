@@ -5,7 +5,7 @@ Mots de passe par défaut À CHANGER dès la première connexion.
 """
 from app import create_app
 from app.extensions import db
-from app.models import Boutique, User
+from app.models import Boutique, Entreprise, User
 
 BOUTIQUES = ["Boutique 1 Marché", "Boutique 2 Pavé", "Boutique 3 Chambre Froide"]
 
@@ -20,13 +20,21 @@ UTILISATEURS = [
 
 app = create_app()
 with app.app_context():
+    # Entreprise DONA : ce script ne seed que sa propre entreprise
+    entreprise = Entreprise.query.filter_by(nom="DONA").first()
+    if entreprise is None:
+        entreprise = Entreprise(nom="DONA", statut_abonnement="actif")
+        db.session.add(entreprise)
+        db.session.commit()
+    print("Entreprise :", entreprise.nom)
+
     # Boutiques : renomme la 1re si elle existe, crée les manquantes
     for i, nom in enumerate(BOUTIQUES, start=1):
         b = db.session.get(Boutique, i)
         if b:
             b.nom = nom
         else:
-            db.session.add(Boutique(id=i, nom=nom))
+            db.session.add(Boutique(id=i, nom=nom, entreprise_id=entreprise.id))
     db.session.commit()
     print("3 boutiques en place :", ", ".join(BOUTIQUES))
 
@@ -34,7 +42,7 @@ with app.app_context():
         u = User.query.filter_by(username=username).first()
         if u is None:
             u = User(username=username, nom_complet=nom, role=role,
-                     boutique_id=btq)
+                     boutique_id=btq, entreprise_id=entreprise.id)
             u.set_password(mdp)
             db.session.add(u)
             print(f"Compte créé : {username} / {mdp} ({role}, boutique {btq})")

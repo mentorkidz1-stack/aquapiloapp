@@ -11,6 +11,7 @@ class Achat(db.Model):
                            nullable=False, index=True)
     boutique_id = db.Column(db.Integer, db.ForeignKey("boutiques.id"),
                             nullable=False, default=1)
+    entreprise_id = db.Column(db.Integer, db.ForeignKey("entreprises.id"), nullable=False)
     quantite = db.Column(db.Numeric(10, 3), nullable=False)      # kg ou pièces
     prix_unitaire = db.Column(db.Integer, nullable=False)        # FCFA / unité
     montant_total = db.Column(db.Integer, nullable=False)

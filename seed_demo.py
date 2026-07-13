@@ -7,15 +7,22 @@ import random
 from datetime import date, time, timedelta
 from decimal import Decimal
 
+from flask import g
+
 from app import create_app
 from app.extensions import db
-from app.models import Perte, Produit, User, Vente, VenteLigne
+from app.models import Entreprise, Perte, Produit, User, Vente, VenteLigne
 from app.services.cmup import enregistrer_achat
 
 random.seed(42)
 app = create_app()
 
-with app.app_context():
+with app.app_context(), app.test_request_context():
+    entreprise = Entreprise.query.filter_by(nom="DONA").first()
+    if entreprise is None:
+        raise SystemExit("Entreprise DONA introuvable : lancez d'abord seed.py")
+    g.entreprise_id = entreprise.id  # active l'auto-marquage entreprise_id
+
     if Vente.query.count() > 0:
         print("Des ventes existent déjà : seed_demo annulé par prudence.")
         raise SystemExit

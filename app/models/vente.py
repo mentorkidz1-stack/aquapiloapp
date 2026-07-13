@@ -25,6 +25,7 @@ class Vente(db.Model):
                        nullable=False, default="valide")
     boutique_id = db.Column(db.Integer, db.ForeignKey("boutiques.id"),
                             nullable=False, default=1)
+    entreprise_id = db.Column(db.Integer, db.ForeignKey("entreprises.id"), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False,
                            default=lambda: datetime.now(timezone.utc))

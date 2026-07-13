@@ -14,6 +14,7 @@ class StockJournalier(db.Model):
                            nullable=False, index=True)
     boutique_id = db.Column(db.Integer, db.ForeignKey("boutiques.id"),
                             nullable=False, default=1)
+    entreprise_id = db.Column(db.Integer, db.ForeignKey("entreprises.id"), nullable=False)
     date_stock = db.Column(db.Date, nullable=False, index=True)
     stock_initial = db.Column(db.Numeric(10, 3), nullable=False, default=0)
     entrees = db.Column(db.Numeric(10, 3), nullable=False, default=0)
