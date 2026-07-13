@@ -47,6 +47,18 @@ def operateur_required(view):
     return wrapped
 
 
+def associe_required(view):
+    """Protège les vues de l'espace associé (part de chiffre d'affaires).
+    Session dédiée (clé 'associe_username'), indépendante de Flask-Login
+    et de l'accès opérateur : lecture seule, aucune capacité de gestion."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get("associe_username"):
+            return redirect(url_for("associes.login"))
+        return view(*args, **kwargs)
+    return wrapped
+
+
 def periode_non_cloturee(extraire_date):
     """Bloque toute écriture (POST/PUT/DELETE) sur une période clôturée.
 

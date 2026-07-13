@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Espace associé{% endblock %}
+{% block content %}
+<div class="barre-mobile navbar navbar-dark px-3 d-flex justify-content-between align-items-center">
+  <span class="navbar-brand fw-bold mb-0"><i class="bi bi-water"></i> Marlin · Associé</span>
+  <a href="{{ url_for('associes.logout') }}" class="btn btn-sm btn-outline-light">
+    <i class="bi bi-box-arrow-right"></i> Déconnexion</a>
+</div>
+
+<div class="p-3 p-lg-4">
+  <h1 class="h3 mb-1">Bonjour {{ moi.nom }}</h1>
+  <p class="text-muted mb-4">Répartition du chiffre d'affaires mensuel entre associés.</p>
+
+  <div class="alert alert-light border small mb-4">
+    <i class="bi bi-info-circle"></i> Ce montant correspond aux abonnements
+    enregistrés comme <strong>actifs</strong> dans la plateforme — ce n'est
+    pas un suivi d'argent réellement encaissé (aucune passerelle de paiement
+    n'est branchée à l'application).
+  </div>
+
+  <div class="row g-2 mb-4">
+    <div class="col-12 col-md-6">
+      <div class="card border-0 shadow-sm h-100 carte-stat">
+        <div class="card-body py-3 d-flex align-items-center gap-3">
+          <div class="icone-stat bg-primary-subtle text-primary"><i class="bi bi-cash-stack"></i></div>
+          <div>
+            <div class="text-muted small">Chiffre d'affaires mensuel (abonnements actifs)</div>
+            <div class="h4 mb-0">{{ total | fcfa }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="card border-0 shadow-sm h-100 carte-stat">
+        <div class="card-body py-3 d-flex align-items-center gap-3">
+          <div class="icone-stat bg-success-subtle text-success"><i class="bi bi-person-check"></i></div>
+          <div>
+            <div class="text-muted small">Ta part ({{ part_moi.pourcentage }}%)</div>
+            <div class="h4 mb-0 fw-bold">{{ part_moi.montant | fcfa }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="h5 mb-3"><i class="bi bi-pie-chart"></i> Répartition entre associés</h2>
+  <div class="table-responsive mb-4">
+  <table class="table table-hover bg-white shadow-sm align-middle">
+    <thead class="table-light">
+      <tr><th>Associé</th><th class="text-end">Part</th><th class="text-end">Montant / mois</th></tr>
+    </thead>
+    <tbody>
+    {% for p in parts %}
+      <tr class="{{ 'table-info' if p.toi }}">
+        <td class="fw-semibold">{{ p.nom }}{{ ' (toi)' if p.toi }}</td>
+        <td class="text-end">{{ p.pourcentage }}%</td>
+        <td class="text-end">{{ p.montant | fcfa }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  <h2 class="h5 mb-3"><i class="bi bi-shop"></i> Détail par entreprise cliente</h2>
+  <div class="table-responsive">
+  <table class="table table-sm bg-white shadow-sm">
+    <thead class="table-light">
+      <tr><th>Entreprise</th><th>Statut</th><th class="text-end">Tarif / mois</th></tr>
+    </thead>
+    <tbody>
+    {% for nom, statut, tarif in entreprises %}
+      <tr>
+        <td>{{ nom }}</td>
+        <td>
+          <span class="badge bg-{{ {'actif': 'success', 'essai': 'info', 'suspendu': 'danger'}[statut] }}">
+            {{ statut }}</span>
+        </td>
+        <td class="text-end">{{ (tarif | fcfa) if statut == 'actif' else '—' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3" class="text-center text-muted py-4">Aucune entreprise.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

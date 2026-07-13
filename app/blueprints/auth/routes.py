@@ -24,10 +24,11 @@ def login():
         with sans_filtre_tenant():
             user = User.query.filter_by(username=form.username.data.strip()).first()
         if user and user.actif and user.check_password(form.password.data):
-            # Efface tout accès opérateur qui traînerait dans cette session
-            # (même navigateur) : une connexion locataire ne doit jamais
-            # hériter d'un accès cross-tenant précédemment établi.
+            # Efface tout accès opérateur/associé qui traînerait dans cette
+            # session (même navigateur) : une connexion locataire ne doit
+            # jamais hériter d'un accès cross-tenant précédemment établi.
             session.pop("operateur_authentifie", None)
+            session.pop("associe_username", None)
             login_user(user, remember=form.remember.data)
             flash(f"Bienvenue, {user.nom_complet} !", "success")
             # Sécurité : n'accepter que des redirections internes
@@ -45,5 +46,6 @@ def login():
 def logout():
     logout_user()
     session.pop("operateur_authentifie", None)
+    session.pop("associe_username", None)
     flash("Vous êtes déconnecté(e).", "info")
     return redirect(url_for("auth.login"))

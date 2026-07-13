@@ -19,6 +19,23 @@ class Config:
     # committés — uniquement dans .env (cf. app/blueprints/operateur).
     OPERATEUR_USERNAME = os.environ.get("OPERATEUR_USERNAME")
     OPERATEUR_PASSWORD_HASH = os.environ.get("OPERATEUR_PASSWORD_HASH")
+    # Espace associés (répartition du chiffre d'affaires SaaS) : chaque
+    # associé a son propre identifiant/mot de passe et son pourcentage,
+    # jamais committés — uniquement dans .env (cf. app/blueprints/associes).
+    ASSOCIES = [
+        {
+            "nom": os.environ.get("ASSOCIE_1_NOM"),
+            "username": os.environ.get("ASSOCIE_1_USERNAME"),
+            "password_hash": os.environ.get("ASSOCIE_1_PASSWORD_HASH"),
+            "pourcentage": int(os.environ.get("ASSOCIE_1_POURCENTAGE") or 0),
+        },
+        {
+            "nom": os.environ.get("ASSOCIE_2_NOM"),
+            "username": os.environ.get("ASSOCIE_2_USERNAME"),
+            "password_hash": os.environ.get("ASSOCIE_2_PASSWORD_HASH"),
+            "pourcentage": int(os.environ.get("ASSOCIE_2_POURCENTAGE") or 0),
+        },
+    ]
 
 
 class DevConfig(Config):

@@ -11,7 +11,7 @@
 </head>
 <body class="bg-light">
 
-{% set mode_locataire = current_user.is_authenticated and request.blueprint != 'operateur' %}
+{% set mode_locataire = current_user.is_authenticated and request.blueprint not in ('operateur', 'associes') %}
 {% if mode_locataire %}
 <!-- Barre supérieure (mobile uniquement) -->
 <nav class="navbar navbar-dark barre-mobile d-lg-none px-3">
