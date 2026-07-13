@@ -81,7 +81,17 @@ MYSQL_HOST=localhost
 MYSQL_USER=poissonnerie_app
 MYSQL_PASSWORD=MOT-DE-PASSE-FORT-ICI
 MYSQL_DB=poissonnerie
+
+# Accès opérateur SaaS (support/facturation/activation) — /operateur/login
+# Générer le hash : ./venv/bin/python -c "from flask_bcrypt import Bcrypt; print(Bcrypt().generate_password_hash('votre-mdp-fort').decode())"
+OPERATEUR_USERNAME=exploitant
+OPERATEUR_PASSWORD_HASH=COLLER-LE-HASH-BCRYPT-ICI
 ```
+
+> ⚠️ Sans ces deux dernières variables, `/operateur/login` refuse toujours
+> la connexion (fail-closed) : aucun identifiant opérateur ne fonctionne
+> tant qu'elles ne sont pas définies. Utiliser un mot de passe différent
+> de celui de dev.
 
 ```bash
 # Créer les tables et les données initiales
@@ -170,6 +180,9 @@ systemctl restart poissonnerie
 - [ ] Une clôture test + réouverture admin
 - [ ] Export Excel et PDF depuis le tableau de bord
 - [ ] Présence de la première sauvegarde dans /var/backups/poissonnerie
+- [ ] La landing page (`/`) s'affiche pour un visiteur non connecté, avec les bons tarifs
+- [ ] Le formulaire de demande d'accès enregistre bien une ligne (sans créer de compte)
+- [ ] Connexion à `/operateur/login` avec les identifiants opérateur de prod
 
 ## Dépannage rapide
 
