@@ -14,14 +14,23 @@
 </div>
 
 <div class="row g-2 mb-4">
-  {% for libelle, valeur in [("Chiffre d'affaires", ind.ca | fcfa),
-      ("Marge", ind.marge | fcfa), ("Nombre de ventes", ind.nb_ventes),
-      ("Pertes", ind.pertes | fcfa)] %}
+  {% for libelle, valeur, icone, couleur in [
+      ("Chiffre d'affaires", ind.ca | fcfa, "cash-stack", "primary"),
+      ("Marge", ind.marge | fcfa, "graph-up-arrow", "success"),
+      ("Nombre de ventes", ind.nb_ventes, "receipt", "info"),
+      ("Pertes", ind.pertes | fcfa, "exclamation-octagon", "danger")] %}
   <div class="col-6 col-lg-3">
-    <div class="card border-0 shadow-sm"><div class="card-body py-3">
-      <div class="text-muted small">{{ libelle }}</div>
-      <div class="h5 mb-0">{{ valeur }}</div>
-    </div></div>
+    <div class="card border-0 shadow-sm h-100 carte-stat">
+      <div class="card-body py-3 d-flex align-items-center gap-3">
+        <div class="icone-stat bg-{{ couleur }}-subtle text-{{ couleur }}">
+          <i class="bi bi-{{ icone }}"></i>
+        </div>
+        <div>
+          <div class="text-muted small">{{ libelle }}</div>
+          <div class="h5 mb-0">{{ valeur }}</div>
+        </div>
+      </div>
+    </div>
   </div>
   {% endfor %}
 </div>

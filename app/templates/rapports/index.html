@@ -133,7 +133,8 @@
                 <td class="text-end">{{ d.ca | fcfa }}</td>
                 <td class="text-end text-success fw-semibold">{{ d.marge | fcfa }}</td></tr>
           {% else %}
-            <tr><td colspan="4" class="text-muted text-center">Aucune vente ce mois.</td></tr>
+            <tr><td colspan="4" class="text-muted text-center py-3">
+              <i class="bi bi-inbox"></i> Aucune vente ce mois.</td></tr>
           {% endfor %}
           </tbody>
         </table>
@@ -154,7 +155,8 @@
                 <td class="text-end">{{ d.ca | fcfa }}</td>
                 <td class="text-end text-danger fw-semibold">{{ d.marge | fcfa }}</td></tr>
           {% else %}
-            <tr><td colspan="4" class="text-muted text-center">Aucune vente ce mois.</td></tr>
+            <tr><td colspan="4" class="text-muted text-center py-3">
+              <i class="bi bi-inbox"></i> Aucune vente ce mois.</td></tr>
           {% endfor %}
           </tbody>
         </table>
