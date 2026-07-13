@@ -26,9 +26,11 @@
       ("Ventes", ind.nb_ventes, "receipt", "info"),
       ("Pertes du jour", ind.pertes | fcfa, "exclamation-octagon", "danger")] %}
   <div class="col-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100">
+    <div class="card border-0 shadow-sm h-100 carte-stat">
       <div class="card-body py-3 d-flex align-items-center gap-3">
-        <i class="bi bi-{{ icone }} fs-3 text-{{ couleur }}"></i>
+        <div class="icone-stat bg-{{ couleur }}-subtle text-{{ couleur }}">
+          <i class="bi bi-{{ icone }}"></i>
+        </div>
         <div>
           <div class="text-muted small">{{ libelle }}</div>
           <div class="h5 mb-0">{{ valeur }}</div>

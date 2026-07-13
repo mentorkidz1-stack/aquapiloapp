@@ -2,8 +2,8 @@
 {% block title %}Caisse{% endblock %}
 {% block content %}
 <div class="text-center py-5">
-  <i class="bi bi-water text-primary" style="font-size: 3rem;"></i>
-  <h1 class="h3 mt-2 mb-1">Bonjour {{ current_user.nom_complet }} !</h1>
+  <div class="pastille-logo mx-auto" style="margin-top: 0;"><i class="bi bi-water"></i></div>
+  <h1 class="h3 mt-3 mb-1">Bonjour {{ current_user.nom_complet }} !</h1>
   <p class="text-muted mb-4">{{ current_user.boutique.nom }} —
     {{ aujourdhui.strftime("%d/%m/%Y") }}</p>
 
