@@ -50,15 +50,21 @@
 
 <div class="row g-2 mb-3">
   <div class="col-6 col-md-3">
-    <div class="card border-0 shadow-sm"><div class="card-body py-2">
-      <div class="text-muted small">CA du jour (ventes valides)</div>
-      <div class="h5 mb-0">{{ ca | fcfa }}</div>
+    <div class="card border-0 shadow-sm carte-stat"><div class="card-body py-2 d-flex align-items-center gap-3">
+      <div class="icone-stat bg-primary-subtle text-primary"><i class="bi bi-cash-stack"></i></div>
+      <div>
+        <div class="text-muted small">CA du jour (ventes valides)</div>
+        <div class="h5 mb-0">{{ ca | fcfa }}</div>
+      </div>
     </div></div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card border-0 shadow-sm"><div class="card-body py-2">
-      <div class="text-muted small">Marge du jour</div>
-      <div class="h5 mb-0">{{ marge | fcfa }}</div>
+    <div class="card border-0 shadow-sm carte-stat"><div class="card-body py-2 d-flex align-items-center gap-3">
+      <div class="icone-stat bg-success-subtle text-success"><i class="bi bi-graph-up-arrow"></i></div>
+      <div>
+        <div class="text-muted small">Marge du jour</div>
+        <div class="h5 mb-0">{{ marge | fcfa }}</div>
+      </div>
     </div></div>
   </div>
 </div>
