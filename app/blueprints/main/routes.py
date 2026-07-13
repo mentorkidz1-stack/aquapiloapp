@@ -1,10 +1,13 @@
-"""Blueprint main — tableau de bord adapté au rôle."""
+"""Blueprint main — landing publique + tableau de bord adapté au rôle."""
 from datetime import date
 
-from flask import Blueprint, render_template, request
-from flask_login import login_required, current_user
+from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask_login import current_user
 
-from app.models import Boutique
+from app.extensions import db
+from app.models import Boutique, DemandeAcces
+from app.models.entreprise import TARIF_BASE, TARIF_PALIER, SEUIL_PALIER
+from app.blueprints.main.forms import DemandeAccesForm
 from app.services.rapports import (alertes_stock, indicateurs_periode,
                                    repartition_paiements, serie_jours)
 
@@ -12,8 +15,12 @@ main_bp = Blueprint("main", __name__)
 
 
 @main_bp.route("/")
-@login_required
 def dashboard():
+    if not current_user.is_authenticated:
+        return render_template("main/landing.html", form=DemandeAccesForm(),
+                               tarif_base=TARIF_BASE, tarif_palier=TARIF_PALIER,
+                               seuil_palier=SEUIL_PALIER, annee=date.today().year)
+
     auj = date.today()
 
     # Caissier : page minimale orientée caisse
@@ -37,3 +44,30 @@ def dashboard():
         if current_user.is_direction:
             contexte["jours"] = serie_jours(7, boutique_id)
     return render_template("main/dashboard.html", **contexte)
+
+
+@main_bp.route("/demande-acces", methods=["POST"])
+def demande_acces():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+
+    form = DemandeAccesForm()
+    if form.validate_on_submit():
+        db.session.add(DemandeAcces(
+            nom_poissonnerie=form.nom_poissonnerie.data.strip(),
+            responsable=form.responsable.data.strip(),
+            telephone=form.telephone.data.strip(),
+            email=form.email.data.strip(),
+            nombre_boutiques=form.nombre_boutiques.data,
+        ))
+        db.session.commit()
+        flash("Votre demande a bien été envoyée ! Nous vous recontactons "
+              "très vite pour activer votre compte.", "success")
+        return redirect(url_for("main.dashboard", _anchor="demande-acces"))
+
+    for champ in form:
+        for err in champ.errors:
+            flash(f"{champ.label.text} : {err}", "danger")
+    return render_template("main/landing.html", form=form,
+                           tarif_base=TARIF_BASE, tarif_palier=TARIF_PALIER,
+                           seuil_palier=SEUIL_PALIER, annee=date.today().year), 400

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Marlin{% endblock %}
+{% block content %}
+<div class="fond-marine">
+  <header class="entete-publique">
+    <span class="marque"><i class="bi bi-water fs-3"></i> Marlin</span>
+    <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-box-arrow-in-right"></i> Connexion</a>
+  </header>
+
+  <div class="hero-landing text-center text-white">
+    <span class="badge badge-hero rounded-pill px-3 py-2 mb-3">
+      <i class="bi bi-shield-check"></i> Vos données isolées, réservées à votre poissonnerie
+    </span>
+    <h1 class="display-5 mb-3">La gestion de votre poissonnerie,<br class="d-none d-md-block"> enfin simple.</h1>
+    <p class="lead mb-4 mx-auto" style="max-width: 640px;">
+      Caisse, stock, achats, pertes, clôtures et rapports — tout en un,
+      pensé pour être utilisé au comptoir, sur téléphone.
+    </p>
+    <a href="#demande-acces" class="btn btn-accent btn-lg px-4">
+      <i class="bi bi-send"></i> Demander l'accès</a>
+  </div>
+</div>
+
+<div class="section-blanche">
+  <div class="container">
+    <h2 class="text-center mb-2">Tout ce qu'il faut pour gérer votre poissonnerie</h2>
+    <p class="text-center text-muted mb-5">Pensé pour le terrain, pas pour les tableurs.</p>
+    <div class="row g-4">
+      {% for icone, titre, texte in [
+          ("cash-register", "Caisse rapide",
+           "Recherche produit instantanée (tolérante aux accents), plusieurs modes "
+           "de paiement — espèces, MTN MoMo, Moov Money, Celtiis Cash — et ticket "
+           "imprimable au format thermique 58 mm."),
+          ("graph-up-arrow", "CMUP automatique",
+           "Le coût moyen unitaire pondéré de chaque produit est recalculé "
+           "automatiquement à chaque achat : vos marges restent justes, sans tenue "
+           "manuelle."),
+          ("exclamation-triangle", "Alertes de stock",
+           "Chaque produit sous son seuil d'alerte remonte immédiatement sur le "
+           "tableau de bord, boutique par boutique."),
+          ("lock", "Clôtures verrouillées",
+           "Journée, semaine ou mois : une fois clôturée, une période est "
+           "verrouillée côté serveur. Toute réouverture est tracée, avec motif "
+           "obligatoire."),
+          ("bar-chart-line", "Rapports & exports",
+           "Comparaisons hebdomadaires et mensuelles, top/flop produits, export "
+           "PDF et Excel en un clic."),
+          ("shop", "Multi-boutiques, multi-rôles",
+           "Admin, promoteur, gérant, caissier : chacun voit exactement ce qu'il "
+           "doit voir, sur autant de boutiques que nécessaire."),
+      ] %}
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card carte-avantage">
+          <div class="card-body">
+            <div class="icone-avantage mb-3"><i class="bi bi-{{ icone }}"></i></div>
+            <h3 class="h5">{{ titre }}</h3>
+            <p class="text-muted mb-0">{{ texte }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="fond-marine py-5">
+  <div class="container">
+    <h2 class="text-center text-white mb-2">Un tarif simple, sans surprise</h2>
+    <p class="text-center mb-5" style="color: rgba(255,255,255,.75);">
+      Facturation mensuelle, sans engagement.</p>
+    <div class="row g-4 justify-content-center">
+      <div class="col-12 col-md-5 col-lg-4">
+        <div class="card carte-tarif">
+          <div class="card-body p-4 text-center d-flex flex-column">
+            <h3 class="h5">1 à {{ seuil_palier - 1 }} boutique{{ 's' if seuil_palier - 1 > 1 }}</h3>
+            <div class="prix">{{ tarif_base | fcfa }}</div>
+            <p class="text-muted">par mois</p>
+            <ul class="list-unstyled text-start small mb-4">
+              <li class="mb-2"><i class="bi bi-check-lg text-success"></i> Caisse, stock, achats et pertes</li>
+              <li class="mb-2"><i class="bi bi-check-lg text-success"></i> Clôtures verrouillées & journal d'audit</li>
+              <li class="mb-2"><i class="bi bi-check-lg text-success"></i> Rapports, comparaisons et exports PDF/Excel</li>
+              <li class="mb-2"><i class="bi bi-check-lg text-success"></i> Comptes utilisateurs illimités</li>
+            </ul>
+            <a href="#demande-acces" class="btn btn-outline-primary w-100 mt-auto">Demander l'accès</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-5 col-lg-4">
+        <div class="card carte-tarif mise-en-avant">
+          <div class="card-body p-4 text-center d-flex flex-column">
+            <span class="badge bg-warning text-dark rounded-pill mb-2 align-self-center">
+              à partir de {{ seuil_palier }} boutiques</span>
+            <h3 class="h5">{{ seuil_palier }} boutiques et plus</h3>
+            <div class="prix">{{ tarif_palier | fcfa }}</div>
+            <p class="text-muted">par mois</p>
+            <ul class="list-unstyled text-start small mb-4">
+              <li class="mb-2"><i class="bi bi-check-lg text-success"></i> Caisse, stock, achats et pertes</li>
+              <li class="mb-2"><i class="bi bi-check-lg text-success"></i> Clôtures verrouillées & journal d'audit</li>
+              <li class="mb-2"><i class="bi bi-check-lg text-success"></i> Rapports, comparaisons et exports PDF/Excel</li>
+              <li class="mb-2"><i class="bi bi-check-lg text-success"></i> Comptes utilisateurs illimités</li>
+            </ul>
+            <a href="#demande-acces" class="btn btn-accent w-100 mt-auto">Demander l'accès</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-blanche" id="demande-acces">
+  <div class="container" style="max-width: 560px;">
+    <h2 class="text-center mb-2">Demander l'accès</h2>
+    <p class="text-center text-muted mb-4">
+      Remplissez ce formulaire : nous vous recontactons pour activer votre compte.
+    </p>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <form method="post" action="{{ url_for('main.demande_acces') }}" novalidate>
+          {{ form.hidden_tag() }}
+          {% for champ in [form.nom_poissonnerie, form.responsable, form.telephone,
+                           form.email, form.nombre_boutiques] %}
+          <div class="mb-3">
+            {{ champ.label(class="form-label") }}
+            {{ champ(class="form-control" + (" is-invalid" if champ.errors else "")) }}
+            {% for err in champ.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+          </div>
+          {% endfor %}
+          {{ form.submit(class="btn btn-accent btn-lg w-100") }}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="pied-page-publique text-center">
+  <div><i class="bi bi-water"></i> <strong>Marlin</strong> — Gestion de poissonnerie</div>
+  <div class="small mt-1">© {{ annee }} Marlin. Tous droits réservés.</div>
+</footer>
+{% endblock %}

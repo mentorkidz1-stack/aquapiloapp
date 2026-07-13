@@ -9,7 +9,8 @@ from app.models.perte import Perte
 from app.models.stock_journalier import StockJournalier
 from app.models.cloture import Cloture, Reouverture
 from app.models.audit import AuditLog
+from app.models.demande_acces import DemandeAcces
 
 __all__ = ["Entreprise", "Boutique", "User", "Produit", "PrixHistorique", "Achat",
            "Vente", "VenteLigne", "Perte", "StockJournalier",
-           "Cloture", "Reouverture", "AuditLog"]
+           "Cloture", "Reouverture", "AuditLog", "DemandeAcces"]
