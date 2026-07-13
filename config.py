@@ -14,6 +14,11 @@ class Config:
     WTF_CSRF_ENABLED = True
     # Session : déconnexion automatique après 8 h d'inactivité
     PERMANENT_SESSION_LIFETIME = 8 * 3600
+    # Accès opérateur SaaS (support/facturation/activation, cross-tenant) :
+    # identifiants distincts des comptes locataires, jamais dans le code ni
+    # committés — uniquement dans .env (cf. app/blueprints/operateur).
+    OPERATEUR_USERNAME = os.environ.get("OPERATEUR_USERNAME")
+    OPERATEUR_PASSWORD_HASH = os.environ.get("OPERATEUR_PASSWORD_HASH")
 
 
 class DevConfig(Config):

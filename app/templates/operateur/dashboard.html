@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Espace opérateur{% endblock %}
+{% block content %}
+<div class="barre-mobile navbar navbar-dark px-3 d-flex justify-content-between align-items-center">
+  <span class="navbar-brand fw-bold mb-0"><i class="bi bi-water"></i> Marlin · Opérateur</span>
+  <a href="{{ url_for('operateur.logout') }}" class="btn btn-sm btn-outline-light">
+    <i class="bi bi-box-arrow-right"></i> Déconnexion</a>
+</div>
+
+<div class="p-3 p-lg-4">
+  <h1 class="h3 mb-1">Tableau de bord opérateur</h1>
+  <p class="text-muted mb-4">Support, facturation et activation des comptes — vue cross-tenant.</p>
+
+  <div class="row g-2 mb-4">
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100 carte-stat">
+        <div class="card-body py-3 d-flex align-items-center gap-3">
+          <div class="icone-stat bg-primary-subtle text-primary"><i class="bi bi-shop"></i></div>
+          <div>
+            <div class="text-muted small">Entreprises clientes</div>
+            <div class="h5 mb-0">{{ entreprises | length }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100 carte-stat">
+        <div class="card-body py-3 d-flex align-items-center gap-3">
+          <div class="icone-stat bg-success-subtle text-success"><i class="bi bi-cash-stack"></i></div>
+          <div>
+            <div class="text-muted small">Facturation mensuelle (actifs)</div>
+            <div class="h5 mb-0">{{ total_mensuel | fcfa }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100 carte-stat">
+        <div class="card-body py-3 d-flex align-items-center gap-3">
+          <div class="icone-stat bg-warning-subtle text-warning"><i class="bi bi-envelope-paper"></i></div>
+          <div>
+            <div class="text-muted small">Demandes en attente</div>
+            <div class="h5 mb-0">{{ demandes_en_attente | length }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="h5 mb-3"><i class="bi bi-envelope-paper"></i> Demandes d'accès en attente</h2>
+  <div class="table-responsive mb-4">
+  <table class="table table-hover bg-white shadow-sm align-middle">
+    <thead class="table-light">
+      <tr><th>Reçue le</th><th>Poissonnerie</th><th>Responsable</th><th>Téléphone</th>
+          <th>Email</th><th class="text-end">Boutiques</th><th></th></tr>
+    </thead>
+    <tbody>
+    {% for d in demandes_en_attente %}
+      <tr>
+        <td class="text-nowrap">{{ d.created_at.strftime("%d/%m/%Y %H:%M") }}</td>
+        <td class="fw-semibold">{{ d.nom_poissonnerie }}</td>
+        <td>{{ d.responsable }}</td>
+        <td>{{ d.telephone }}</td>
+        <td>{{ d.email }}</td>
+        <td class="text-end">{{ d.nombre_boutiques }}</td>
+        <td class="text-end">
+          <a href="{{ url_for('operateur.activer', demande_id=d.id) }}" class="btn btn-sm btn-primary">
+            <i class="bi bi-check-lg"></i> Activer</a>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7" class="text-center text-muted py-4">
+        <i class="bi bi-inbox fs-4 d-block mb-1"></i>Aucune demande en attente.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  <h2 class="h5 mb-3"><i class="bi bi-shop"></i> Entreprises clientes</h2>
+  <div class="table-responsive mb-4">
+  <table class="table table-hover bg-white shadow-sm align-middle">
+    <thead class="table-light">
+      <tr><th>Entreprise</th><th>Statut</th><th class="text-end">Boutiques</th>
+          <th class="text-end">Utilisateurs</th><th class="text-end">Tarif/mois</th>
+          <th>Créée le</th><th></th></tr>
+    </thead>
+    <tbody>
+    {% for e in entreprises %}
+      <tr>
+        <td class="fw-semibold">{{ e.nom }}</td>
+        <td>
+          <span class="badge bg-{{ {'actif': 'success', 'essai': 'info', 'suspendu': 'danger'}[e.statut_abonnement] }}">
+            {{ e.statut_abonnement }}</span>
+        </td>
+        <td class="text-end">{{ stats[e.id].nb_boutiques }}</td>
+        <td class="text-end">{{ stats[e.id].nb_users }}</td>
+        <td class="text-end">{{ stats[e.id].tarif | fcfa }}</td>
+        <td>{{ e.created_at.strftime("%d/%m/%Y") }}</td>
+        <td class="text-end">
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown">Statut</button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              {% for s in statuts %}
+              <li>
+                <form method="post" action="{{ url_for('operateur.changer_statut', entreprise_id=e.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="statut" value="{{ s }}">
+                  <button class="dropdown-item{{ ' active' if s == e.statut_abonnement }}"
+                          type="submit"{{ ' disabled' if s == e.statut_abonnement }}>
+                    {{ s }}</button>
+                </form>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7" class="text-center text-muted py-4">
+        <i class="bi bi-inbox fs-4 d-block mb-1"></i>Aucune entreprise.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  {% if demandes_traitees %}
+  <h2 class="h6 text-muted mb-2">Dernières demandes traitées</h2>
+  <div class="table-responsive">
+  <table class="table table-sm">
+    <thead class="table-light"><tr><th>Reçue le</th><th>Poissonnerie</th><th>Responsable</th></tr></thead>
+    <tbody>
+    {% for d in demandes_traitees %}
+      <tr><td>{{ d.created_at.strftime("%d/%m/%Y") }}</td>
+          <td>{{ d.nom_poissonnerie }}</td><td>{{ d.responsable }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

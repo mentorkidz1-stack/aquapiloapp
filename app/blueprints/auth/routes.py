@@ -1,7 +1,7 @@
 """Blueprint auth — connexion et déconnexion."""
 from datetime import date
 
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
 
 from app.blueprints.auth.forms import LoginForm
@@ -24,6 +24,10 @@ def login():
         with sans_filtre_tenant():
             user = User.query.filter_by(username=form.username.data.strip()).first()
         if user and user.actif and user.check_password(form.password.data):
+            # Efface tout accès opérateur qui traînerait dans cette session
+            # (même navigateur) : une connexion locataire ne doit jamais
+            # hériter d'un accès cross-tenant précédemment établi.
+            session.pop("operateur_authentifie", None)
             login_user(user, remember=form.remember.data)
             flash(f"Bienvenue, {user.nom_complet} !", "success")
             # Sécurité : n'accepter que des redirections internes
@@ -40,5 +44,6 @@ def login():
 @login_required
 def logout():
     logout_user()
+    session.pop("operateur_authentifie", None)
     flash("Vous êtes déconnecté(e).", "info")
     return redirect(url_for("auth.login"))

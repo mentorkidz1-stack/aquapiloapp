@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Connexion opérateur{% endblock %}
+{% block content %}
+<div class="fond-marine">
+  <header class="entete-publique">
+    <a class="marque" href="{{ url_for('main.dashboard') }}">
+      <i class="bi bi-water fs-3"></i> Marlin
+    </a>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-arrow-left"></i> Accueil
+    </a>
+  </header>
+
+  <div class="cadre-central">
+    <div class="card carte-connexion">
+      <div class="pastille-logo"><i class="bi bi-shield-lock"></i></div>
+      <div class="card-body p-4 pt-3">
+        <div class="text-center mb-3">
+          <h1 class="h4 fw-bold mb-1">Espace opérateur</h1>
+          <p class="text-muted mb-0">Support, facturation, activation des comptes.</p>
+        </div>
+
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="form-floating mb-3">
+            {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""),
+                             id="username", placeholder="Identifiant opérateur", autofocus=true) }}
+            <label for="username"><i class="bi bi-person-badge"></i> Identifiant opérateur</label>
+            {% for err in form.username.errors %}
+              <div class="invalid-feedback">{{ err }}</div>{% endfor %}
+          </div>
+          <div class="form-floating mb-3">
+            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""),
+                             id="password", placeholder="Mot de passe") }}
+            <label for="password"><i class="bi bi-lock"></i> Mot de passe</label>
+            {% for err in form.password.errors %}
+              <div class="invalid-feedback">{{ err }}</div>{% endfor %}
+          </div>
+          {{ form.submit(class="btn btn-primary btn-lg w-100") }}
+        </form>
+      </div>
+    </div>
+    <p class="pied-connexion mt-3 text-center">
+      Accès strictement réservé à l'exploitant de la plateforme Marlin.
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -3,7 +3,7 @@
 Le décorateur @periode_non_cloturee sera ajouté ici en Phase 4.
 """
 from functools import wraps
-from flask import abort
+from flask import abort, session, redirect, url_for
 from flask_login import current_user
 
 
@@ -31,6 +31,20 @@ def role_required(role_minimum):
             return view(*args, **kwargs)
         return wrapped
     return decorator
+
+
+def operateur_required(view):
+    """Protège les vues de l'espace opérateur SaaS (support/facturation/
+    activation). Session dédiée, totalement indépendante de Flask-Login
+    et de current_user : évite toute interférence avec la résolution du
+    tenant courant dans app/services/tenant.py (g.entreprise_id ne dépend
+    que de current_user.is_authenticated, jamais de cette session)."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get("operateur_authentifie"):
+            return redirect(url_for("operateur.login"))
+        return view(*args, **kwargs)
+    return wrapped
 
 
 def periode_non_cloturee(extraire_date):

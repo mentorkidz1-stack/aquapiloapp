@@ -42,6 +42,7 @@ def create_app(config_name: str | None = None,
     from app.blueprints.clotures.routes import clotures_bp
     from app.blueprints.rapports.routes import rapports_bp
     from app.blueprints.admin.routes import admin_bp
+    from app.blueprints.operateur.routes import operateur_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(ventes_bp)
@@ -52,6 +53,7 @@ def create_app(config_name: str | None = None,
     app.register_blueprint(clotures_bp)
     app.register_blueprint(rapports_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(operateur_bp)
 
     # Modèles (import nécessaire pour flask db migrate)
     from app import models  # noqa: F401
