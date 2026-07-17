@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Conditions générales d'utilisation{% endblock %}
+{% block content %}
+<header class="entete-legal d-flex justify-content-between align-items-center">
+  <a class="marque" href="{{ url_for('main.dashboard') }}">
+    <i class="bi bi-water fs-4"></i> Aquapilo
+  </a>
+  <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-light">
+    <i class="bi bi-arrow-left"></i> Accueil
+  </a>
+</header>
+
+<div class="page-legale">
+  <h1 class="h3 mb-1">Conditions générales d'utilisation</h1>
+  <p class="maj mb-4">Dernière mise à jour : {{ annee }}</p>
+
+  <h2>1. Objet</h2>
+  <p>
+    Aquapilo est une plateforme de gestion pour poissonneries (caisse,
+    stock, achats, pertes, clôtures, rapports), proposée en abonnement
+    mensuel à des entreprises clientes indépendantes.
+  </p>
+
+  <h2>2. Accès au service</h2>
+  <p>
+    L'accès n'est pas automatique : toute entreprise intéressée soumet
+    une demande via le formulaire de la page d'accueil. L'exploitant de
+    la plateforme étudie la demande et, s'il l'accepte, active
+    manuellement le compte et transmet les identifiants au responsable
+    désigné.
+  </p>
+
+  <h2>3. Tarifs</h2>
+  <p>
+    Facturation mensuelle, sans engagement de durée :
+  </p>
+  <ul>
+    <li>{{ tarif_base | fcfa }} / mois pour 1 à {{ seuil_palier - 1 }} boutique(s)</li>
+    <li>{{ tarif_palier | fcfa }} / mois à partir de {{ seuil_palier }} boutiques</li>
+  </ul>
+  <p>
+    Les modalités de paiement sont communiquées directement par
+    l'exploitant lors de l'activation du compte.
+  </p>
+
+  <h2>4. Obligations du client</h2>
+  <p>
+    Le client s'engage à fournir des informations exactes, à garder ses
+    identifiants de connexion confidentiels, et à n'utiliser la
+    plateforme que pour la gestion légitime de son activité. Chaque
+    entreprise cliente reste seule responsable de l'exactitude des
+    données qu'elle saisit (prix, stocks, ventes).
+  </p>
+
+  <h2>5. Isolation et propriété des données</h2>
+  <p>
+    Les données saisies par une entreprise cliente lui appartiennent et
+    restent strictement séparées de celles des autres entreprises
+    clientes de la plateforme, grâce à un mécanisme d'isolation
+    technique appliqué à chaque opération.
+  </p>
+
+  <h2>6. Disponibilité</h2>
+  <p>
+    L'exploitant met en œuvre des moyens raisonnables pour assurer la
+    disponibilité du service (sauvegardes régulières, hébergement
+    sécurisé), sans garantie de disponibilité continue absolue. Des
+    interruptions ponctuelles pour maintenance peuvent survenir.
+  </p>
+
+  <h2>7. Résiliation</h2>
+  <p>
+    Le client peut demander l'arrêt de son abonnement à tout moment.
+    L'exploitant peut suspendre ou résilier un compte en cas de
+    non-paiement ou d'usage non conforme à ces conditions, après
+    notification au responsable désigné.
+  </p>
+
+  <h2>8. Droit applicable</h2>
+  <p>
+    Les présentes conditions sont soumises au droit béninois. Tout
+    litige relève de la compétence des tribunaux de Cotonou, République
+    du Bénin.
+  </p>
+
+  <div class="alert alert-warning small mt-4">
+    <i class="bi bi-exclamation-triangle"></i>
+    Ce document est un point de départ raisonnable, pas un avis
+    juridique. Avant une mise en production réelle avec de vrais
+    clients payants, fais-le valider par un professionnel du droit
+    béninois.
+  </div>
+</div>
+{% endblock %}

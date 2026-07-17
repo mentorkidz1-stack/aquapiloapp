@@ -4,7 +4,7 @@
 <div class="fond-marine">
   <header class="entete-publique">
     <a class="marque" href="{{ url_for('main.dashboard') }}">
-      <i class="bi bi-water fs-3"></i> Marlin
+      <i class="bi bi-water fs-3"></i> Aquapilo
     </a>
     <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-light">
       <i class="bi bi-arrow-left"></i> Accueil
@@ -50,8 +50,11 @@
     </div>
 
     <p class="pied-connexion mt-3 text-center">
-      © {{ annee }} Marlin — Gestion de poissonnerie<br>
-      Accès réservé au personnel autorisé.
+      © {{ annee }} Aquapilo — Gestion de poissonnerie<br>
+      Accès réservé au personnel autorisé.<br>
+      <a href="{{ url_for('main.confidentialite') }}" class="link-light text-decoration-underline">Confidentialité</a>
+      <span class="mx-1">·</span>
+      <a href="{{ url_for('main.cgu') }}" class="link-light text-decoration-underline">CGU</a>
     </p>
   </div>
 </div>

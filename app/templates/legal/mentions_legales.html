@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Mentions légales{% endblock %}
+{% block content %}
+<header class="entete-legal d-flex justify-content-between align-items-center">
+  <a class="marque" href="{{ url_for('main.dashboard') }}">
+    <i class="bi bi-water fs-4"></i> Aquapilo
+  </a>
+  <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-light">
+    <i class="bi bi-arrow-left"></i> Accueil
+  </a>
+</header>
+
+<div class="page-legale">
+  <h1 class="h3 mb-1">Mentions légales</h1>
+  <p class="maj mb-4">Dernière mise à jour : {{ annee }}</p>
+
+  <div class="alert alert-warning small">
+    <i class="bi bi-exclamation-triangle"></i>
+    <strong>À compléter avant mise en production réelle :</strong> les
+    informations entre crochets [ ] ci-dessous sont des exemples à
+    remplacer par les informations exactes de l'exploitant de la
+    plateforme (raison sociale, immatriculation, adresse, contact).
+  </div>
+
+  <h2>Éditeur de la plateforme</h2>
+  <p>
+    Aquapilo est édité par [Nom de l'entreprise ou de l'entrepreneur
+    individuel], [forme juridique], immatriculé(e) sous le numéro
+    [numéro RCCM / IFU], dont le siège est situé à [adresse], Cotonou,
+    République du Bénin.<br>
+    Contact : [adresse email de contact] — [numéro de téléphone]
+  </p>
+
+  <h2>Directeur de la publication</h2>
+  <p>[Nom du responsable de publication]</p>
+
+  <h2>Hébergement</h2>
+  <p>
+    Le site et l'application sont hébergés sur un serveur privé virtuel
+    (VPS) fourni par :<br>
+    OVH SAS — 2 rue Kellermann, 59100 Roubaix, France.
+  </p>
+
+  <h2>Propriété intellectuelle</h2>
+  <p>
+    L'ensemble des éléments de la plateforme Aquapilo (charte graphique,
+    textes, logo, code source) est la propriété de son éditeur, sauf
+    mention contraire. Toute reproduction non autorisée est interdite.
+  </p>
+
+  <h2>Données personnelles</h2>
+  <p>
+    Le traitement des données personnelles est détaillé dans la
+    <a href="{{ url_for('main.confidentialite') }}">politique de
+    confidentialité</a>.
+  </p>
+
+  <h2>Contact</h2>
+  <p>Pour toute question relative à ces mentions légales : [adresse email de contact]</p>
+</div>
+{% endblock %}

@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Marlin{% endblock %}
+{% block title %}Aquapilo{% endblock %}
 {% block content %}
 <div class="fond-marine">
   <header class="entete-publique">
-    <span class="marque"><i class="bi bi-water fs-3"></i> Marlin</span>
+    <span class="marque"><i class="bi bi-water fs-3"></i> Aquapilo</span>
     <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-light">
       <i class="bi bi-box-arrow-in-right"></i> Connexion</a>
   </header>
@@ -134,7 +134,14 @@
 </div>
 
 <footer class="pied-page-publique text-center">
-  <div><i class="bi bi-water"></i> <strong>Marlin</strong> — Gestion de poissonnerie</div>
-  <div class="small mt-1">© {{ annee }} Marlin. Tous droits réservés.</div>
+  <div><i class="bi bi-water"></i> <strong>Aquapilo</strong> — Gestion de poissonnerie</div>
+  <div class="small mt-2">
+    <a href="{{ url_for('main.mentions_legales') }}" class="link-light text-decoration-underline">Mentions légales</a>
+    <span class="mx-2">·</span>
+    <a href="{{ url_for('main.confidentialite') }}" class="link-light text-decoration-underline">Confidentialité</a>
+    <span class="mx-2">·</span>
+    <a href="{{ url_for('main.cgu') }}" class="link-light text-decoration-underline">CGU</a>
+  </div>
+  <div class="small mt-2">© {{ annee }} Aquapilo. Tous droits réservés.</div>
 </footer>
 {% endblock %}

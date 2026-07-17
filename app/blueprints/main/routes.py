@@ -46,6 +46,23 @@ def dashboard():
     return render_template("main/dashboard.html", **contexte)
 
 
+@main_bp.route("/confidentialite")
+def confidentialite():
+    return render_template("legal/confidentialite.html", annee=date.today().year)
+
+
+@main_bp.route("/cgu")
+def cgu():
+    return render_template("legal/cgu.html", annee=date.today().year,
+                           tarif_base=TARIF_BASE, tarif_palier=TARIF_PALIER,
+                           seuil_palier=SEUIL_PALIER)
+
+
+@main_bp.route("/mentions-legales")
+def mentions_legales():
+    return render_template("legal/mentions_legales.html", annee=date.today().year)
+
+
 @main_bp.route("/demande-acces", methods=["POST"])
 def demande_acces():
     if current_user.is_authenticated:

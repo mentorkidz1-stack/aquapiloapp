@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Politique de confidentialité{% endblock %}
+{% block content %}
+<header class="entete-legal d-flex justify-content-between align-items-center">
+  <a class="marque" href="{{ url_for('main.dashboard') }}">
+    <i class="bi bi-water fs-4"></i> Aquapilo
+  </a>
+  <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-light">
+    <i class="bi bi-arrow-left"></i> Accueil
+  </a>
+</header>
+
+<div class="page-legale">
+  <h1 class="h3 mb-1">Politique de confidentialité</h1>
+  <p class="maj mb-4">Dernière mise à jour : {{ annee }}</p>
+
+  <p>
+    Cette page explique quelles données Aquapilo collecte, pourquoi, et
+    comment elles sont protégées — pour les visiteurs qui remplissent le
+    formulaire de demande d'accès, et pour les utilisateurs des
+    entreprises clientes de la plateforme.
+  </p>
+
+  <h2>1. Données collectées</h2>
+  <p><strong>Formulaire de demande d'accès</strong> (page d'accueil) :
+  nom de la poissonnerie, nom du responsable, téléphone, email, nombre
+  de boutiques. Ces informations servent uniquement à étudier la
+  demande et à activer un compte — elles ne créent aucun compte ni
+  entreprise automatiquement.</p>
+  <p><strong>Comptes utilisateurs</strong> : nom complet, identifiant de
+  connexion, rôle, mot de passe (jamais stocké en clair — uniquement
+  sous forme de hash cryptographique bcrypt, impossible à retrouver).</p>
+  <p><strong>Données de gestion</strong> : ventes, achats, stocks,
+  pertes et clôtures saisis par chaque entreprise cliente pour son
+  propre usage.</p>
+
+  <h2>2. Isolation entre entreprises clientes</h2>
+  <p>
+    Aquapilo héberge plusieurs entreprises clientes indépendantes sur la
+    même plateforme. Un filtre technique appliqué à chaque lecture et
+    écriture en base de données garantit qu'une entreprise cliente ne
+    peut jamais voir ni modifier les données d'une autre. Ce filtre est
+    <strong>fail-closed</strong> : en cas de doute sur l'identité de
+    l'entreprise, la plateforme ne montre rien plutôt que de risquer une
+    fuite.
+  </p>
+
+  <h2>3. Finalité et base légale</h2>
+  <p>
+    Les données sont traitées pour : répondre aux demandes d'accès,
+    fournir le service de gestion aux entreprises clientes, assurer la
+    sécurité et la traçabilité des opérations (journal d'audit), et
+    calculer la facturation des abonnements.
+  </p>
+
+  <h2>4. Conservation</h2>
+  <p>
+    Les données d'une entreprise cliente sont conservées tant que son
+    compte est actif. Les demandes d'accès non suivies d'activation
+    peuvent être supprimées périodiquement.
+  </p>
+
+  <h2>5. Destinataires</h2>
+  <p>
+    Les données ne sont jamais vendues ni transmises à des tiers à des
+    fins commerciales. Seul le personnel autorisé de l'exploitant de la
+    plateforme (support, facturation) peut y accéder, via un accès
+    technique distinct et journalisé, séparé des comptes clients.
+  </p>
+
+  <h2>6. Cookies</h2>
+  <p>
+    Aquapilo utilise uniquement un cookie de session technique,
+    nécessaire pour rester connecté. Aucun cookie publicitaire ni de
+    traçage tiers n'est utilisé.
+  </p>
+
+  <h2>7. Vos droits</h2>
+  <p>
+    Conformément à la législation béninoise sur la protection des
+    données à caractère personnel, vous disposez d'un droit d'accès, de
+    rectification et de suppression de vos données. Pour l'exercer,
+    contactez [adresse email de contact]. En cas de désaccord, vous
+    pouvez saisir l'Autorité de Protection des Données à caractère
+    Personnel (APDP) du Bénin.
+  </p>
+
+  <div class="alert alert-warning small mt-4">
+    <i class="bi bi-exclamation-triangle"></i>
+    Cette page est un point de départ raisonnable, pas un avis
+    juridique. Avant une mise en production réelle, fais-la valider par
+    un professionnel du droit béninois, notamment sur les obligations
+    de déclaration auprès de l'APDP.
+  </div>
+</div>
+{% endblock %}
