@@ -1,5 +1,6 @@
 .env
 ACCES_ET_DEMARRAGE.txt
+Aquapilo_Identifiants.pdf
 venv/
 __pycache__/
 *.pyc
