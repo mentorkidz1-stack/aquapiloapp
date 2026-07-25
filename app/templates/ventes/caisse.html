@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Caisse{% endblock %}
+{% block extra_head %}
+<link rel="manifest" href="{{ url_for('static', filename='vendor/manifest/manifest.json') }}">
+<meta name="theme-color" content="#1f4e79">
+{% endblock %}
 {% block content %}
 <h1 class="h3 mb-3">Caisse — Nouvelle vente</h1>
 
@@ -243,5 +247,12 @@ document.getElementById("form-vente").addEventListener("submit", () => {
   );
   document.getElementById("inp-boutique").value = boutiqueCourante();
 });
+
+// Service worker : rend la caisse disponible hors-ligne (phase 1 —
+// fondations). Enregistré uniquement sur cette page, portée /ventes/.
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js", { scope: "/ventes/" })
+    .catch(err => console.warn("Service worker caisse non enregistré :", err));
+}
 </script>
 {% endblock %}

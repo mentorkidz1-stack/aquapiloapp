@@ -1,0 +1,26 @@
+{
+  "name": "Aquapilo — Caisse",
+  "short_name": "Aquapilo",
+  "description": "Caisse Aquapilo — fonctionne même sans connexion.",
+  "start_url": "/ventes/caisse",
+  "scope": "/ventes/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f2a44",
+  "theme_color": "#1f4e79",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/static/vendor/manifest/icone-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/vendor/manifest/icone-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

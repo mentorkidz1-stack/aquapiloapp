@@ -1,7 +1,8 @@
 """Blueprint main — landing publique + tableau de bord adapté au rôle."""
 from datetime import date
 
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import (Blueprint, render_template, request, flash, redirect,
+                   url_for, current_app, send_from_directory)
 from flask_login import current_user
 
 from app.extensions import db
@@ -48,6 +49,18 @@ def dashboard():
         if current_user.is_direction:
             contexte["jours"] = serie_jours(7, boutique_id)
     return render_template("main/dashboard.html", **contexte)
+
+
+@main_bp.route("/sw.js")
+def service_worker_caisse():
+    # Servi hors de /static/ pour pouvoir revendiquer la portée
+    # /ventes/ (la portée max autorisée d'un service worker est le
+    # dossier de son URL — /static/ serait trop restreint).
+    reponse = send_from_directory(
+        f"{current_app.static_folder}/caisse", "sw.js",
+        mimetype="application/javascript")
+    reponse.headers["Cache-Control"] = "no-cache"
+    return reponse
 
 
 @main_bp.route("/confidentialite")
