@@ -66,7 +66,8 @@
       <li class="nav-item"><a class="nav-link {{ 'active' if request.blueprint == 'stocks' }}"
           href="{{ url_for('stocks.journee') }}">
         <i class="bi bi-clipboard-data"></i> Stocks</a></li>
-      {% if current_user.is_direction or current_user.peut_voir_rapport_journalier %}
+      {% if (current_user.is_direction or current_user.peut_voir_rapport_journalier)
+            and current_user.role != 'gerant' %}
       <li class="nav-item"><a class="nav-link {{ 'active' if request.blueprint == 'rapports' }}"
           href="{{ url_for('rapports.index') }}">
         <i class="bi bi-bar-chart-line"></i> Rapports</a></li>

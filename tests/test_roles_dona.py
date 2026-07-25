@@ -49,17 +49,22 @@ def test_stock_par_boutique(app):
         assert stock_courant(produit_id, 3) == Decimal("0")
 
 
-def test_gerant_jamais_hebdo_mensuel(app, client_gerant):
-    # Exports semaine et mois interdits au gérant, même verrou ouvert
-    assert client_gerant.get("/rapports/export/semaine/xlsx").status_code == 403
-    assert client_gerant.get("/rapports/export/mois/pdf").status_code == 403
-    # Le journalier reste accessible (verrou ouvert par défaut)
-    r = client_gerant.get("/rapports/export/jour/xlsx")
-    assert r.status_code == 200 and r.data[:2] == b"PK"
-    # La page rapports montre la version jour, sans comparaisons
-    h = client_gerant.get("/rapports/").get_data(as_text=True)
-    assert "Comparaison hebdomadaire" not in h
-    assert "Rapport des ventes" in h
+def test_gerant_jamais_aucun_rapport(app, client_gerant):
+    # Le Gérant n'a plus aucun accès aux rapports (marge/comparaisons/
+    # exports), quel que soit le type ou l'état du verrou journalier.
+    for type_p, fmt in (("jour", "xlsx"), ("semaine", "xlsx"), ("mois", "pdf")):
+        assert client_gerant.get(
+            f"/rapports/export/{type_p}/{fmt}").status_code == 403
+    r = client_gerant.get("/rapports/", follow_redirects=True)
+    assert r.status_code == 200
+    assert "pas accessibles au rôle Gérant" in r.get_data(as_text=True)
+    # La carte "Marge du jour" et le bouton "Rapports" ont disparu du
+    # tableau de bord et du journal des ventes.
+    tableau = client_gerant.get("/").get_data(as_text=True)
+    assert "Marge du jour" not in tableau
+    assert "Rapports</a>" not in tableau
+    journal = client_gerant.get("/ventes/").get_data(as_text=True)
+    assert "Marge du jour" not in journal
 
 
 def test_verrou_rapport_journalier(app, client_gerant):
@@ -67,10 +72,7 @@ def test_verrou_rapport_journalier(app, client_gerant):
         g = User.query.filter_by(username="gerant").first()
         g.acces_rapport_journalier = False
         db.session.commit()
-    # Rapport jour et journal des ventes verrouillés
-    assert client_gerant.get("/rapports/export/jour/xlsx").status_code == 403
-    r = client_gerant.get("/rapports/", follow_redirects=True)
-    assert "verrouillé" in r.get_data(as_text=True)
+    # Journal des ventes verrouillé (indépendant du blocage rapports)
     r = client_gerant.get("/ventes/", follow_redirects=True)
     assert "verrouillé" in r.get_data(as_text=True)
     # L'opérationnel reste ouvert

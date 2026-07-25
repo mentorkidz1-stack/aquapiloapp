@@ -47,6 +47,12 @@ def _bornes(type_p: str, jour: date):
 @login_required
 @role_required("gerant")
 def index():
+    # Le GÉRANT n'a plus accès aux rapports, quel que soit le verrou
+    # acces_rapport_journalier (qui reste réservé au promoteur/admin).
+    if current_user.role == "gerant":
+        flash("Les rapports ne sont pas accessibles au rôle Gérant.", "warning")
+        return redirect(url_for("main.dashboard"))
+
     boutique_id = _boutique_choisie()
     boutiques = Boutique.query.filter_by(actif=True).order_by(Boutique.id).all()
     auj = date.today()
@@ -77,6 +83,9 @@ def index():
 def export(type_p, fmt):
     if type_p not in ("jour", "semaine", "mois") or fmt not in ("xlsx", "pdf"):
         abort(404)
+    # Le GÉRANT n'a plus accès aux rapports, quel que soit le verrou.
+    if current_user.role == "gerant":
+        abort(403)
     # Gérant : jamais d'export hebdo/mensuel ; journalier selon le verrou
     if not current_user.is_direction:
         if type_p != "jour" or not current_user.peut_voir_rapport_journalier:

@@ -34,6 +34,10 @@ def dashboard():
         "boutiques": boutiques, "boutique_id": boutique_id,
         "alertes": alertes_stock(),
         "montrer_ventes": current_user.peut_voir_rapport_journalier,
+        # Le rôle Gérant (strictement) ne voit jamais la marge ni les
+        # rapports, indépendamment du verrou acces_rapport_journalier
+        # (qui reste réservé au promoteur/admin).
+        "masquer_marge": current_user.role == "gerant",
         "ind": None, "jours": None, "paiements": None,
         "aujourdhui": auj,
     }

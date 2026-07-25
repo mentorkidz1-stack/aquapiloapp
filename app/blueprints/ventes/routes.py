@@ -119,6 +119,7 @@ def journal():
                            ca=ca, marge=marge, produits=produits,
                            vendeurs=vendeurs, modes=MODES_LIBELLES,
                            noms_boutiques=noms_boutiques,
+                           masquer_marge=(current_user.role == "gerant"),
                            boutiques=_boutiques(), boutique_id=boutique_id,
                            produit_id=produit_id, vendeur_id=vendeur_id,
                            mode=mode)

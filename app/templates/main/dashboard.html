@@ -25,6 +25,7 @@
       ("Marge du jour", ind.marge | fcfa, "graph-up-arrow", "success"),
       ("Ventes", ind.nb_ventes, "receipt", "info"),
       ("Pertes du jour", ind.pertes | fcfa, "exclamation-octagon", "danger")] %}
+  {% if not (masquer_marge and libelle == "Marge du jour") %}
   <div class="col-6 col-lg-3">
     <div class="card border-0 shadow-sm h-100 carte-stat">
       <div class="card-body py-3 d-flex align-items-center gap-3">
@@ -38,6 +39,7 @@
       </div>
     </div>
   </div>
+  {% endif %}
   {% endfor %}
 </div>
 
@@ -106,6 +108,7 @@
 
 {% if current_user.is_direction or current_user.peut_voir_rapport_journalier %}
 <div class="mt-3 d-flex flex-wrap gap-2">
+  {% if not masquer_marge %}
   <a href="{{ url_for('rapports.index') }}" class="btn btn-outline-primary">
     <i class="bi bi-bar-chart-line"></i> Rapports</a>
   <a href="{{ url_for('rapports.export', type_p='jour', fmt='pdf') }}"
@@ -118,6 +121,7 @@
   <a href="{{ url_for('rapports.export', type_p='mois', fmt='xlsx') }}"
      class="btn btn-outline-success">
     <i class="bi bi-file-earmark-excel"></i> Point du mois (Excel)</a>
+  {% endif %}
   {% endif %}
   <a href="{{ url_for('ventes.ticket_demo') }}" class="btn btn-outline-secondary btn-sm">
     <i class="bi bi-printer"></i> Test d'impression 58 mm</a>
