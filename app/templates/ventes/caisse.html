@@ -7,6 +7,16 @@
 {% block content %}
 <h1 class="h3 mb-3">Caisse — Nouvelle vente</h1>
 
+<div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+  <span id="badge-connexion" class="badge bg-success"><i class="bi bi-wifi"></i> En ligne</span>
+  <span id="info-synchro" class="small text-muted"></span>
+</div>
+<div id="alerte-perimee" class="alert alert-warning small d-none">
+  <i class="bi bi-exclamation-triangle"></i>
+  Catalogue non synchronisé depuis plus de 24h — les prix et stocks affichés
+  peuvent être obsolètes.
+</div>
+
 <div class="mb-3" style="max-width: 420px;">
   <label class="form-label fw-semibold">Boutique</label>
   {% if boutique_fixe %}
@@ -99,10 +109,76 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='caisse/db.js') }}"></script>
 <script>
 const PRODUITS = {{ produits_json | tojson }};
 const lignes = [];
 let produitSelectionne = null;
+
+// ---------- Connexion + fraîcheur du catalogue local (phase 2) ----------
+const badgeConnexion = document.getElementById("badge-connexion");
+const infoSynchro = document.getElementById("info-synchro");
+const alertePerimee = document.getElementById("alerte-perimee");
+
+function majBadgeConnexion(forceHorsLigne) {
+  const enLigne = !forceHorsLigne && navigator.onLine;
+  badgeConnexion.className = "badge " + (enLigne ? "bg-success" : "bg-secondary");
+  badgeConnexion.innerHTML = enLigne
+    ? '<i class="bi bi-wifi"></i> En ligne'
+    : '<i class="bi bi-wifi-off"></i> Hors-ligne';
+}
+window.addEventListener("online", () => majBadgeConnexion(false));
+window.addEventListener("offline", () => majBadgeConnexion(true));
+majBadgeConnexion();
+
+function afficherFraicheur(horodatage) {
+  if (!horodatage) { infoSynchro.textContent = ""; alertePerimee.classList.add("d-none"); return; }
+  const heures = (Date.now() - horodatage) / 3600000;
+  const d = new Date(horodatage);
+  infoSynchro.textContent = "Catalogue à jour au " + d.toLocaleDateString("fr-FR")
+    + " " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  alertePerimee.classList.toggle("d-none", heures <= 24);
+}
+
+function catalogueVientDuReseau() {
+  // Ce chargement a vraiment atteint le serveur : le catalogue embarqué
+  // est frais, on le persiste avec un nouvel horodatage.
+  AquapiloDB.sauvegarderCatalogue({ produits: PRODUITS })
+    .then(() => afficherFraicheur(Date.now()))
+    .catch((err) => console.warn("Sauvegarde catalogue locale échouée :", err));
+}
+
+function catalogueVientDuCache() {
+  // Page servie hors-ligne par le service worker : le catalogue
+  // embarqué date du dernier chargement réseau réussi, pas de maintenant.
+  // Le badge est forcé "hors-ligne" : navigator.onLine, lui, ne verrait
+  // ici qu'une carte réseau active, pas un serveur injoignable.
+  majBadgeConnexion(true);
+  AquapiloDB.chargerCatalogue()
+    .then(({ derniereMaj }) => afficherFraicheur(derniereMaj))
+    .catch((err) => console.warn("Lecture catalogue locale échouée :", err));
+}
+
+if (window.AquapiloDB) {
+  if (navigator.serviceWorker.controller && "caches" in window) {
+    // navigator.onLine ne dit que si la carte réseau est active, pas si
+    // CE chargement a atteint le serveur : c'est le service worker qui
+    // sait réellement d'où vient la réponse. Il l'écrit dans le Cache
+    // Storage (pas par message : un message peut arriver avant que ce
+    // script, en bas de page, ait fini de poser son écouteur).
+    caches.match("/__aquapilo_source__")
+      .then((reponse) => reponse ? reponse.json() : null)
+      .then((marqueur) => {
+        if (marqueur && marqueur.source === "cache") catalogueVientDuCache();
+        else catalogueVientDuReseau();
+      })
+      .catch(() => catalogueVientDuReseau());
+  } else {
+    // Pas encore de service worker actif (tout premier chargement) :
+    // la page vient forcément du réseau.
+    catalogueVientDuReseau();
+  }
+}
 
 const selBoutique = document.getElementById("sel-boutique");
 const boutiqueFixe = document.getElementById("sel-boutique-fixe");
