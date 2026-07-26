@@ -31,7 +31,16 @@
   <button id="btn-synchroniser" type="button" class="btn btn-sm btn-outline-primary d-none">
     <i class="bi bi-arrow-repeat"></i> Synchroniser maintenant
   </button>
+  <button id="btn-installer" type="button" class="btn btn-sm btn-accent d-none">
+    <i class="bi bi-download"></i> Installer l'application
+  </button>
   <span id="info-synchro" class="small text-muted"></span>
+</div>
+<div id="alerte-ios-installer" class="alert alert-info small d-none">
+  <i class="bi bi-info-circle"></i>
+  Pour installer la caisse sur l'écran d'accueil de cet iPhone : appuyez sur
+  <i class="bi bi-box-arrow-up"></i> <strong>Partager</strong>, puis
+  <strong>« Sur l'écran d'accueil »</strong>.
 </div>
 <div id="alerte-conflit" class="alert alert-danger small d-none"></div>
 <div id="alerte-perimee" class="alert alert-warning small d-none">
@@ -551,6 +560,43 @@ document.getElementById("form-vente").addEventListener("submit", async (e) => {
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js", { scope: "/ventes/" })
     .catch(err => console.warn("Service worker caisse non enregistré :", err));
+}
+
+// ---------- Installation de l'application ----------
+// Ne peut fonctionner que sur cette page : c'est la seule où le service
+// worker est enregistré (portée /ventes/), condition que les navigateurs
+// exigent pour proposer l'installation.
+const btnInstaller = document.getElementById("btn-installer");
+const enModeInstalle = window.matchMedia("(display-mode: standalone)").matches
+  || window.navigator.standalone === true;  // iOS Safari
+
+let evenementInstallation = null;
+window.addEventListener("beforeinstallprompt", (evt) => {
+  evt.preventDefault();
+  evenementInstallation = evt;
+  if (!enModeInstalle) btnInstaller.classList.remove("d-none");
+});
+
+btnInstaller.addEventListener("click", async () => {
+  if (!evenementInstallation) return;
+  btnInstaller.disabled = true;
+  evenementInstallation.prompt();
+  await evenementInstallation.userChoice;
+  evenementInstallation = null;
+  btnInstaller.classList.add("d-none");
+  btnInstaller.disabled = false;
+});
+
+window.addEventListener("appinstalled", () => {
+  btnInstaller.classList.add("d-none");
+});
+
+// iOS Safari ne propose jamais beforeinstallprompt : on affiche la
+// consigne manuelle (Partager -> Sur l'écran d'accueil) à la place.
+const estIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const estSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+if (estIOS && estSafari && !enModeInstalle) {
+  document.getElementById("alerte-ios-installer").classList.remove("d-none");
 }
 </script>
 {% endblock %}
