@@ -290,6 +290,22 @@ async function synchroniser({ silencieux } = {}) {
       headers: { "Content-Type": "application/json", "X-CSRFToken": jetonCsrf() },
       body: JSON.stringify({ ventes: aEnvoyer }),
     });
+
+    // Session expirée pendant la coupure : le serveur redirige vers la
+    // connexion au lieu de répondre en JSON. Rien n'est perdu — les
+    // ventes restent en attente sur cet appareil — mais sans ce message,
+    // l'utilisateur ne saurait jamais pourquoi le badge ne se vide pas.
+    if (reponse.redirected && reponse.url.includes("/auth/login")) {
+      alert(`Ta session a expiré. Reconnecte-toi : tes ${aEnvoyer.length} `
+        + "vente(s) en attente ne sont pas perdues, elles se "
+        + "synchroniseront automatiquement après ta connexion.");
+      return;
+    }
+    if (!reponse.ok) {
+      if (!silencieux) alert("La synchronisation a échoué (erreur serveur). Nouvelle tentative plus tard.");
+      return;
+    }
+
     const { resultats } = await reponse.json();
 
     let nSync = 0, nConflitNouveau = 0;

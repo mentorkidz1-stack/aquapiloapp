@@ -2,8 +2,12 @@
 from datetime import date as date_type, datetime
 from decimal import Decimal, ROUND_HALF_UP
 
+from sqlalchemy.exc import IntegrityError
+
 from app.extensions import db
 from app.models import Vente, VenteLigne, Produit
+
+NB_TENTATIVES_NUMERO_TICKET = 5
 
 
 def prochain_numero_ticket(jour: date_type) -> str:
@@ -27,16 +31,8 @@ def creer_vente(lignes_data: list[dict], mode_paiement: str, user,
     """
     maintenant = date_heure or datetime.now()
     jour = maintenant.date()
-    vente = Vente(
-        numero_ticket=prochain_numero_ticket(jour),
-        date_vente=jour,
-        heure_vente=maintenant.time().replace(microsecond=0),
-        mode_paiement=mode_paiement,
-        user_id=user.id,
-        boutique_id=boutique_id or user.boutique_id,
-    )
-    db.session.add(vente)
 
+    specs = []
     total = 0
     for item in lignes_data:
         produit = db.session.get(Produit, int(item["produit_id"]))
@@ -60,21 +56,43 @@ def creer_vente(lignes_data: list[dict], mode_paiement: str, user,
         marge = int(((Decimal(prix_applique) - Decimal(cmup)) * quantite)
                     .quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
-        vente.lignes.append(VenteLigne(
-            produit_id=produit.id,
-            quantite=quantite,
-            prix_catalogue=prix_catalogue,
-            prix_applique=prix_applique,
-            montant=montant,
-            cmup_au_moment=cmup,
+        specs.append(dict(
+            produit_id=produit.id, quantite=quantite, prix_catalogue=prix_catalogue,
+            prix_applique=prix_applique, montant=montant, cmup_au_moment=cmup,
             marge=marge,
         ))
         total += montant
 
-    if not vente.lignes:
+    if not specs:
         raise ValueError("Une vente doit contenir au moins une ligne.")
-    vente.montant_total = total
-    return vente
+
+    # Concurrence : prochain_numero_ticket() compte les ventes du jour pour
+    # deviner le prochain numéro — deux ventes soumises au même instant
+    # (double-clic, deux caissiers en même temps) peuvent calculer le même
+    # numéro. On retente avec un numéro frais plutôt que de laisser planter
+    # la requête sur la contrainte d'unicité.
+    derniere_erreur = None
+    for _ in range(NB_TENTATIVES_NUMERO_TICKET):
+        vente = Vente(
+            numero_ticket=prochain_numero_ticket(jour),
+            date_vente=jour,
+            heure_vente=maintenant.time().replace(microsecond=0),
+            mode_paiement=mode_paiement,
+            user_id=user.id,
+            boutique_id=boutique_id or user.boutique_id,
+        )
+        vente.lignes = [VenteLigne(**s) for s in specs]
+        vente.montant_total = total
+        db.session.add(vente)
+        try:
+            db.session.flush()
+            return vente
+        except IntegrityError as e:
+            derniere_erreur = e
+            db.session.rollback()
+    raise ValueError(
+        "Impossible d'enregistrer le ticket (numéro déjà utilisé), réessayez."
+    ) from derniere_erreur
 
 
 def contexte_ticket(vente: Vente) -> dict:
