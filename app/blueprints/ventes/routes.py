@@ -37,6 +37,17 @@ def _boutique_du_formulaire():
 
 
 # ---------------- CAISSE ----------------
+@ventes_bp.route("/ping")
+@login_required
+def ping():
+    # Endpoint volontairement minimal (aucune requête DB) : la caisse
+    # s'en sert pour savoir, juste avant de valider une vente, si le
+    # serveur est réellement joignable — navigator.onLine ne reflète
+    # que l'état de la carte réseau de l'appareil, pas la joignabilité
+    # du serveur (cf. phase 2).
+    return "OK"
+
+
 @ventes_bp.route("/caisse", methods=["GET", "POST"])
 @login_required
 @periode_non_cloturee(lambda: (date.today(), None))  # boutique lue dans le form

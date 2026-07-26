@@ -3,12 +3,28 @@
 {% block extra_head %}
 <link rel="manifest" href="{{ url_for('static', filename='vendor/manifest/manifest.json') }}">
 <meta name="theme-color" content="#1f4e79">
+<style>
+  #ticket-hors-ligne { font-family: "Courier New", Courier, monospace; font-size: 11px; width: 48mm; }
+  @media print {
+    body * { visibility: hidden; }
+    #ticket-hors-ligne, #ticket-hors-ligne * { visibility: visible !important; }
+    #ticket-hors-ligne {
+      display: block !important;
+      position: absolute; top: 0; left: 0;
+      margin: 0; padding: 2mm 1mm;
+    }
+    @page { size: 58mm auto; margin: 0; }
+  }
+</style>
 {% endblock %}
 {% block content %}
 <h1 class="h3 mb-3">Caisse — Nouvelle vente</h1>
 
 <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
   <span id="badge-connexion" class="badge bg-success"><i class="bi bi-wifi"></i> En ligne</span>
+  <span id="badge-attente" class="badge bg-warning text-dark d-none">
+    <i class="bi bi-hourglass-split"></i> <span id="nb-attente">0</span> vente(s) en attente
+  </span>
   <span id="info-synchro" class="small text-muted"></span>
 </div>
 <div id="alerte-perimee" class="alert alert-warning small d-none">
@@ -21,7 +37,7 @@
   <label class="form-label fw-semibold">Boutique</label>
   {% if boutique_fixe %}
     {% for b in boutiques %}{% if b.id == boutique_fixe %}
-    <input class="form-control form-control-lg" value="{{ b.nom }}" readonly>
+    <input class="form-control form-control-lg" id="txt-boutique-nom" value="{{ b.nom }}" readonly>
     <input type="hidden" id="sel-boutique-fixe" value="{{ b.id }}">
     {% endif %}{% endfor %}
   {% else %}
@@ -106,6 +122,30 @@
     </div>
   </div>
 </div>
+
+<!-- Ticket provisoire (vente créée hors-ligne) : invisible à l'écran,
+     seul élément visible à l'impression — cf. CSS @media print ci-dessus. -->
+<div id="ticket-hors-ligne" class="d-none">
+  <div style="text-align:center; font-weight:bold; font-size:13px;">{{ current_user.entreprise.nom }}</div>
+  <div id="tk-boutique" style="text-align:center;"></div>
+  <div style="border-top:1px dashed #000; margin:4px 0;"></div>
+  <div style="text-align:center; font-weight:bold; border:2px solid #000; padding:2px; margin:4px 0;">
+    *** PROVISOIRE — EN ATTENTE DE SYNCHRONISATION ***
+  </div>
+  <div>Ticket : <span id="tk-numero"></span></div>
+  <div id="tk-date"></div>
+  <div>Vendeur : {{ current_user.nom_complet }}</div>
+  <div style="border-top:1px dashed #000; margin:4px 0;"></div>
+  <div id="tk-lignes"></div>
+  <div style="border-top:1px dashed #000; margin:4px 0;"></div>
+  <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:13px;">
+    <span>TOTAL</span><span id="tk-total"></span>
+  </div>
+  <div id="tk-paiement"></div>
+  <div style="text-align:center; margin-top:6px; font-size:10px;">
+    Ticket provisoire — numéro définitif attribué à la synchronisation.
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -180,6 +220,27 @@ if (window.AquapiloDB) {
   }
 }
 
+// ---------- Ventes en attente de synchronisation (phase 3) ----------
+async function majCompteurAttente() {
+  if (!window.AquapiloDB) return;
+  const n = await AquapiloDB.compterVentesEnAttente();
+  document.getElementById("nb-attente").textContent = n;
+  document.getElementById("badge-attente").classList.toggle("d-none", n === 0);
+}
+majCompteurAttente();
+
+async function serveurJoignable() {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 2500);
+    const reponse = await fetch("/ventes/ping", { method: "GET", cache: "no-store", signal: ctrl.signal });
+    clearTimeout(t);
+    return reponse.ok;
+  } catch (err) {
+    return false;
+  }
+}
+
 const selBoutique = document.getElementById("sel-boutique");
 const boutiqueFixe = document.getElementById("sel-boutique-fixe");
 const inpRecherche = document.getElementById("inp-recherche");
@@ -195,6 +256,13 @@ const btnValider = document.getElementById("btn-valider");
 
 function boutiqueCourante() {
   return boutiqueFixe ? boutiqueFixe.value : selBoutique.value;
+}
+function nomBoutiqueCourante() {
+  if (boutiqueFixe) {
+    const txt = document.getElementById("txt-boutique-nom");
+    return txt ? txt.value : "";
+  }
+  return selBoutique.options[selBoutique.selectedIndex].textContent;
 }
 function fcfa(n) {
   return n.toLocaleString("fr-FR").replace(/\u00a0/g, "\u202f") + " FCFA";
@@ -317,11 +385,85 @@ btnAjouter.addEventListener("click", () => {
   inpRecherche.focus();
 });
 
-document.getElementById("form-vente").addEventListener("submit", () => {
+// ---------- Ticket provisoire (vente hors-ligne, phase 3) ----------
+function afficherTicketHorsLigne(vente) {
+  document.getElementById("tk-boutique").textContent = vente.nomBoutique;
+  document.getElementById("tk-numero").textContent = vente.numeroProvisoire;
+  document.getElementById("tk-date").textContent = new Date(vente.dateCreation).toLocaleString("fr-FR");
+  document.getElementById("tk-lignes").innerHTML = vente.lignes.map((l) => `
+    <div style="margin-top:2px; font-weight:bold;">${l.nom}</div>
+    <div style="display:flex; justify-content:space-between;">
+      <span>${l.quantiteAff} x ${l.prix.toLocaleString("fr-FR")}</span>
+      <span>${l.montant.toLocaleString("fr-FR")} F</span>
+    </div>`).join("");
+  document.getElementById("tk-total").textContent = fcfa(vente.montantTotal);
+  document.getElementById("tk-paiement").textContent = "Paiement : " + vente.modeLibelle;
+}
+
+async function mettreEnFileAttente(boutiqueId) {
+  const modeCoche = document.querySelector('input[name="mode_paiement"]:checked');
+  const labelMode = modeCoche && document.querySelector(`label[for="${modeCoche.id}"]`);
+  const vente = {
+    uuid: crypto.randomUUID(),
+    numeroProvisoire: "HL-" + new Date().toISOString().slice(0, 10).replace(/-/g, "")
+      + "-" + Math.random().toString(16).slice(2, 6).toUpperCase(),
+    boutiqueId,
+    nomBoutique: nomBoutiqueCourante(),
+    modePaiement: modeCoche ? modeCoche.value : "",
+    modeLibelle: labelMode ? labelMode.textContent.trim() : "",
+    lignes: lignes.map((l) => ({
+      produit_id: l.produit_id, nom: l.nom, quantite: l.quantite,
+      quantiteAff: l.quantiteAff, prix: l.prix, montant: l.montant,
+    })),
+    montantTotal: lignes.reduce((s, l) => s + l.montant, 0),
+    dateCreation: Date.now(),
+    statut: "en_attente",
+  };
+
+  await AquapiloDB.ajouterVenteAttente(vente);
+  afficherTicketHorsLigne(vente);
+  window.print();
+
+  lignes.length = 0;
+  rendre();
+  await majCompteurAttente();
+}
+
+document.getElementById("form-vente").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const boutiqueId = boutiqueCourante();
   document.getElementById("inp-lignes").value = JSON.stringify(
     lignes.map(l => ({produit_id: l.produit_id, quantite: l.quantite, prix: l.prix }))
   );
-  document.getElementById("inp-boutique").value = boutiqueCourante();
+  document.getElementById("inp-boutique").value = boutiqueId;
+
+  btnValider.disabled = true;
+  const joignable = await serveurJoignable();
+  if (joignable) {
+    // Serveur atteignable : soumission native normale, comportement
+    // strictement identique à avant la phase 3.
+    e.target.submit();
+    return;
+  }
+
+  // Hors-ligne : refuser si le stock local (catalogue moins les ventes
+  // déjà en file sur cet appareil) est insuffisant pour une des lignes.
+  if (!window.AquapiloDB) {
+    alert("Connexion indisponible et stockage local non pris en charge par ce navigateur : vente impossible pour l'instant.");
+    btnValider.disabled = false;
+    return;
+  }
+  for (const l of lignes) {
+    const stockEffectif = await AquapiloDB.stockLocalEffectif(l.produit_id, boutiqueId);
+    if (stockEffectif < l.quantite) {
+      alert(`Stock local insuffisant pour "${l.nom}" (${stockEffectif} disponible(s) sur cet appareil) — vente hors-ligne refusée. Ajustez la quantité ou réessayez une fois la connexion revenue.`);
+      btnValider.disabled = false;
+      return;
+    }
+  }
+
+  await mettreEnFileAttente(boutiqueId);
+  btnValider.disabled = false;
 });
 
 // Service worker : rend la caisse disponible hors-ligne (phase 1 —
