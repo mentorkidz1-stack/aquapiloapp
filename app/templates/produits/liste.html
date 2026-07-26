@@ -43,7 +43,7 @@
       <th>Unité</th>
       <th class="text-end">Prix achat</th>
       <th class="text-end">Prix vente</th>
-      <th class="text-end">CMUP</th>
+      <th class="text-end">{{ 'Marge' if current_user.is_direction else 'CMUP' }}</th>
       <th class="text-end">Stock
         {% if boutique_id %}
           {% for b in boutiques %}{% if b.id == boutique_id %}
@@ -64,13 +64,19 @@
       <td>{{ p.unite_affichee }}</td>
       <td class="text-end">{{ p.prix_achat | fcfa }}</td>
       <td class="text-end">{{ p.prix_vente | fcfa }}</td>
-      <td class="text-end">{{ p.cmup_actuel | fcfa }}</td>
+      <td class="text-end">
+        {% if current_user.is_direction %}
+          {{ (p.prix_vente - p.cmup_actuel) | fcfa }}
+        {% else %}
+          {{ p.cmup_actuel | fcfa }}
+        {% endif %}
+      </td>
       <td class="text-end">
         {% set stock = stocks[p.id] %}
         {% if stock <= p.seuil_alerte %}
-          <span class="badge bg-danger">{{ stock }} {{ p.unite_affichee }}</span>
+          <span class="badge bg-danger">{{ '%g' % stock }} {{ p.unite_affichee }}</span>
         {% else %}
-          {{ stock }} {{ p.unite_affichee }}
+          {{ '%g' % stock }} {{ p.unite_affichee }}
         {% endif %}
       </td>
       <td class="text-end text-nowrap">
@@ -80,6 +86,15 @@
         <a href="{{ url_for('produits.modifier', produit_id=p.id) }}"
            class="btn btn-sm btn-outline-primary" title="Modifier">
           <i class="bi bi-pencil"></i></a>
+        {% if current_user.is_direction %}
+        <form method="post" action="{{ url_for('produits.supprimer', produit_id=p.id) }}"
+              class="d-inline"
+              onsubmit="return confirm('Supprimer « {{ p.nom }} » ? S\'il a déjà des mouvements (ventes, achats, pertes), il sera désactivé plutôt que supprimé.');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm btn-outline-danger" title="Supprimer">
+            <i class="bi bi-trash"></i></button>
+        </form>
+        {% endif %}
       </td>
     </tr>
   {% else %}

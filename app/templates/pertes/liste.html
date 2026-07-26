@@ -40,7 +40,7 @@
       <td><span class="badge badge-boutique-{{ p.boutique_id }}">
         {{ noms_boutiques.get(p.boutique_id, 'B' ~ p.boutique_id) }}</span></td>
       <td class="fw-semibold">{{ p.produit.nom }}</td>
-      <td class="text-end">{{ p.quantite }} {{ p.produit.unite_affichee }}</td>
+      <td class="text-end">{{ '%g' % p.quantite }} {{ p.produit.unite_affichee }}</td>
       <td>{{ p.motif }}</td>
       <td class="text-end">{{ p.valeur_perte | fcfa }}</td>
       <td>{{ p.user.nom_complet }}</td>

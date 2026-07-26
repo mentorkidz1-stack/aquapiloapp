@@ -42,13 +42,13 @@
       <tr>
         <td class="fw-semibold">{{ sj.produit.nom }}
           <small class="text-muted">({{ sj.produit.unite_affichee }})</small></td>
-        <td class="text-end">{{ sj.stock_initial }}</td>
-        <td class="text-end text-success">{{ '+' ~ sj.entrees if sj.entrees else '—' }}</td>
-        <td class="text-end text-primary">{{ '-' ~ sj.sorties if sj.sorties else '—' }}</td>
-        <td class="text-end text-danger">{{ '-' ~ sj.pertes if sj.pertes else '—' }}</td>
+        <td class="text-end">{{ '%g' % sj.stock_initial }}</td>
+        <td class="text-end text-success">{{ '+' ~ ('%g' % sj.entrees) if sj.entrees else '—' }}</td>
+        <td class="text-end text-primary">{{ '-' ~ ('%g' % sj.sorties) if sj.sorties else '—' }}</td>
+        <td class="text-end text-danger">{{ '-' ~ ('%g' % sj.pertes) if sj.pertes else '—' }}</td>
         <td class="text-end fw-semibold
             {{ 'text-danger' if sj.stock_final <= sj.produit.seuil_alerte }}">
-          {{ sj.stock_final }}
+          {{ '%g' % sj.stock_final }}
           {% if sj.stock_final <= sj.produit.seuil_alerte %}
             <i class="bi bi-exclamation-triangle-fill" title="Sous le seuil d'alerte"></i>
           {% endif %}

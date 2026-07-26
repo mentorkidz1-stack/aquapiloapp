@@ -1,61 +1,73 @@
 {% extends "base.html" %}
 {% block title %}Connexion{% endblock %}
 {% block content %}
-<div class="fond-marine">
-  <header class="entete-publique">
-    <a class="marque" href="{{ url_for('main.dashboard') }}">
-      <i class="bi bi-water fs-3"></i> Aquapilo
-    </a>
-    <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-light">
-      <i class="bi bi-arrow-left"></i> Accueil
-    </a>
-  </header>
+<div class="ecran-connexion">
 
-  <div class="cadre-central">
-    <div class="card carte-connexion">
-      <div class="pastille-logo"><i class="bi bi-water"></i></div>
-      <div class="card-body p-4 pt-3">
-        <div class="text-center mb-3">
-          <h1 class="h4 fw-bold mb-1">Bienvenue !</h1>
-          <p class="text-muted mb-0">Connectez-vous à votre espace de travail.</p>
-        </div>
-
-        <form method="post" novalidate>
-          {{ form.hidden_tag() }}
-          <div class="form-floating mb-3">
-            {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""),
-                             id="username", placeholder="Nom d'utilisateur", autofocus=true) }}
-            <label for="username"><i class="bi bi-person"></i> Nom d'utilisateur</label>
-            {% for err in form.username.errors %}
-              <div class="invalid-feedback">{{ err }}</div>{% endfor %}
-          </div>
-          <div class="form-floating mb-3 position-relative">
-            {{ form.password(class="form-control pe-5" + (" is-invalid" if form.password.errors else ""),
-                             id="password", placeholder="Mot de passe") }}
-            <label for="password"><i class="bi bi-lock"></i> Mot de passe</label>
-            <button class="btn-oeil" type="button" id="btn-oeil" tabindex="-1"
-                    aria-label="Afficher le mot de passe">
-              <i class="bi bi-eye" id="icone-oeil"></i>
-            </button>
-            {% for err in form.password.errors %}
-              <div class="invalid-feedback">{{ err }}</div>{% endfor %}
-          </div>
-          <div class="form-check mb-3">
-            {{ form.remember(class="form-check-input") }}
-            {{ form.remember.label(class="form-check-label small") }}
-          </div>
-          {{ form.submit(class="btn btn-primary btn-lg w-100") }}
-        </form>
-      </div>
+  <div class="panneau-photo">
+    <img src="{{ url_for('static', filename='img/hero-poissonnier.jpg') }}"
+         alt="" class="panneau-photo-img"
+         onerror="this.style.display='none'">
+    <div class="panneau-photo-voile"></div>
+    <span class="badge-icone-marque"><i class="bi bi-water"></i></span>
+    <div class="panneau-photo-contenu">
+      <p class="panneau-photo-texte">La gestion de votre poissonnerie, enfin simple.</p>
     </div>
+    <a href="{{ url_for('main.dashboard') }}" class="btn-retour-photo" aria-label="Retour à l'accueil">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+  </div>
 
-    <p class="pied-connexion mt-3 text-center">
-      © {{ annee }} Aquapilo — Gestion de poissonnerie<br>
-      Accès réservé au personnel autorisé.<br>
-      <a href="{{ url_for('main.confidentialite') }}" class="link-light text-decoration-underline">Confidentialité</a>
-      <span class="mx-1">·</span>
-      <a href="{{ url_for('main.cgu') }}" class="link-light text-decoration-underline">CGU</a>
-    </p>
+  <div class="panneau-formulaire">
+    <div class="conteneur-formulaire">
+      <div class="text-center mb-4">
+        <h1 class="h3 fw-bold mb-1">Bienvenue !</h1>
+        <p class="text-muted mb-0">Connectez-vous à votre espace de travail.</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show py-2">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="form-floating mb-3">
+          {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""),
+                           id="username", placeholder="Nom d'utilisateur", autofocus=true) }}
+          <label for="username"><i class="bi bi-person"></i> Nom d'utilisateur</label>
+          {% for err in form.username.errors %}
+            <div class="invalid-feedback">{{ err }}</div>{% endfor %}
+        </div>
+        <div class="form-floating mb-3 position-relative">
+          {{ form.password(class="form-control pe-5" + (" is-invalid" if form.password.errors else ""),
+                           id="password", placeholder="Mot de passe") }}
+          <label for="password"><i class="bi bi-lock"></i> Mot de passe</label>
+          <button class="btn-oeil" type="button" id="btn-oeil" tabindex="-1"
+                  aria-label="Afficher le mot de passe">
+            <i class="bi bi-eye" id="icone-oeil"></i>
+          </button>
+          {% for err in form.password.errors %}
+            <div class="invalid-feedback">{{ err }}</div>{% endfor %}
+        </div>
+        <div class="form-check mb-3">
+          {{ form.remember(class="form-check-input") }}
+          {{ form.remember.label(class="form-check-label small") }}
+        </div>
+        {{ form.submit(class="btn btn-primary btn-lg w-100") }}
+      </form>
+
+      <p class="pied-connexion-clair mt-4 text-center">
+        © {{ annee }} Aquapilo — Gestion de poissonnerie<br>
+        Accès réservé au personnel autorisé.<br>
+        <a href="{{ url_for('main.confidentialite') }}" class="link-secondary text-decoration-underline">Confidentialité</a>
+        <span class="mx-1">·</span>
+        <a href="{{ url_for('main.cgu') }}" class="link-secondary text-decoration-underline">CGU</a>
+      </p>
+    </div>
   </div>
 </div>
 {% endblock %}

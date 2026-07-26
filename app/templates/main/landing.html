@@ -1,24 +1,40 @@
 {% extends "base.html" %}
 {% block title %}Aquapilo{% endblock %}
 {% block content %}
-<div class="fond-marine">
-  <header class="entete-publique">
+<div class="hero-sombre">
+  <header class="entete-publique entete-sombre">
     <span class="marque"><i class="bi bi-water fs-3"></i> Aquapilo</span>
     <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-light">
       <i class="bi bi-box-arrow-in-right"></i> Connexion</a>
   </header>
 
-  <div class="hero-landing text-center text-white">
-    <span class="badge badge-hero rounded-pill px-3 py-2 mb-3">
-      <i class="bi bi-shield-check"></i> Vos données isolées, réservées à votre poissonnerie
-    </span>
-    <h1 class="display-5 mb-3">La gestion de votre poissonnerie,<br class="d-none d-md-block"> enfin simple.</h1>
-    <p class="lead mb-4 mx-auto" style="max-width: 640px;">
-      Caisse, stock, achats, pertes, clôtures et rapports — tout en un,
-      pensé pour être utilisé au comptoir, sur téléphone.
-    </p>
-    <a href="#demande-acces" class="btn btn-accent btn-lg px-4">
-      <i class="bi bi-send"></i> Demander l'accès</a>
+  <div class="container">
+    <div class="kicker-hero">
+      <span class="ligne-kicker"></span> Vos données isolées, réservées à votre poissonnerie
+    </div>
+    <div class="row align-items-end g-4 mb-5">
+      <div class="col-lg-7">
+        <h1 class="display-4 mb-0 titre-hero-sombre">La gestion de votre poissonnerie,<br class="d-none d-md-block"> enfin simple.</h1>
+      </div>
+      <div class="col-lg-5">
+        <p class="texte-hero-sombre mb-4">
+          Caisse, stock, achats, pertes, clôtures et rapports — tout en un,
+          pensé pour être utilisé au comptoir, sur téléphone.
+        </p>
+        <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-lg-start">
+          <a href="#demande-acces" class="btn btn-accent btn-lg px-4">
+            <i class="bi bi-send"></i> Demander l'accès</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="hero-banniere-bas">
+      <img src="{{ url_for('static', filename='img/hero-poissonnier.jpg') }}"
+           alt="Poissonnier Aquapilo présentant un poisson frais"
+           onerror="this.style.display='none'">
+    </div>
   </div>
 </div>
 
@@ -28,7 +44,7 @@
     <p class="text-center text-muted mb-5">Pensé pour le terrain, pas pour les tableurs.</p>
     <div class="row g-4">
       {% for icone, titre, texte in [
-          ("cash-register", "Caisse rapide",
+          ("cash-stack", "Caisse rapide",
            "Recherche produit instantanée (tolérante aux accents), plusieurs modes "
            "de paiement — espèces, MTN MoMo, Moov Money, Celtiis Cash — et ticket "
            "imprimable au format thermique 58 mm."),

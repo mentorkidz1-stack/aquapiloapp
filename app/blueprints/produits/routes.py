@@ -85,6 +85,34 @@ def modifier(produit_id):
                            titre=f"Modifier — {produit.nom}", produit=produit)
 
 
+@produits_bp.route("/<int:produit_id>/supprimer", methods=["POST"])
+@login_required
+@role_required("promoteur")
+def supprimer(produit_id):
+    from app.models import Achat, Perte, StockJournalier, VenteLigne
+
+    produit = db.get_or_404(Produit, produit_id)
+    nom = produit.nom
+    deja_utilise = (
+        VenteLigne.query.filter_by(produit_id=produit.id).first() is not None
+        or Achat.query.filter_by(produit_id=produit.id).first() is not None
+        or Perte.query.filter_by(produit_id=produit.id).first() is not None
+        or StockJournalier.query.filter_by(produit_id=produit.id).first() is not None
+    )
+    if deja_utilise:
+        produit.actif = False
+        db.session.commit()
+        flash(f"Produit « {nom} » désactivé (des mouvements y sont déjà "
+              "rattachés : ventes, achats, pertes ou stock — suppression "
+              "impossible sans perdre cet historique).", "warning")
+    else:
+        PrixHistorique.query.filter_by(produit_id=produit.id).delete()
+        db.session.delete(produit)
+        db.session.commit()
+        flash(f"Produit « {nom} » supprimé (aucun mouvement rattaché).", "success")
+    return redirect(url_for("produits.liste"))
+
+
 @produits_bp.route("/<int:produit_id>/historique-prix")
 @login_required
 @role_required("gerant")
