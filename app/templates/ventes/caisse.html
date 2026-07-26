@@ -25,8 +25,15 @@
   <span id="badge-attente" class="badge bg-warning text-dark d-none">
     <i class="bi bi-hourglass-split"></i> <span id="nb-attente">0</span> vente(s) en attente
   </span>
+  <span id="badge-conflit" class="badge bg-danger d-none">
+    <i class="bi bi-exclamation-octagon"></i> <span id="nb-conflit">0</span> en conflit
+  </span>
+  <button id="btn-synchroniser" type="button" class="btn btn-sm btn-outline-primary d-none">
+    <i class="bi bi-arrow-repeat"></i> Synchroniser maintenant
+  </button>
   <span id="info-synchro" class="small text-muted"></span>
 </div>
+<div id="alerte-conflit" class="alert alert-danger small d-none"></div>
 <div id="alerte-perimee" class="alert alert-warning small d-none">
   <i class="bi bi-exclamation-triangle"></i>
   Catalogue non synchronisé depuis plus de 24h — les prix et stocks affichés
@@ -186,6 +193,9 @@ function catalogueVientDuReseau() {
   AquapiloDB.sauvegarderCatalogue({ produits: PRODUITS })
     .then(() => afficherFraicheur(Date.now()))
     .catch((err) => console.warn("Sauvegarde catalogue locale échouée :", err));
+  // Le serveur est manifestement joignable : on tente de purger la file
+  // d'attente sans déranger l'utilisateur si elle est déjà vide.
+  if (typeof synchroniser === "function") synchroniser({ silencieux: true });
 }
 
 function catalogueVientDuCache() {
@@ -220,12 +230,20 @@ if (window.AquapiloDB) {
   }
 }
 
-// ---------- Ventes en attente de synchronisation (phase 3) ----------
+// ---------- Ventes en attente / synchronisation (phases 3 et 4) ----------
+const btnSynchroniser = document.getElementById("btn-synchroniser");
+const alerteConflit = document.getElementById("alerte-conflit");
+
 async function majCompteurAttente() {
   if (!window.AquapiloDB) return;
-  const n = await AquapiloDB.compterVentesEnAttente();
-  document.getElementById("nb-attente").textContent = n;
-  document.getElementById("badge-attente").classList.toggle("d-none", n === 0);
+  const [nAttente, nConflit] = await Promise.all([
+    AquapiloDB.compterVentesEnAttente(), AquapiloDB.compterVentesConflit(),
+  ]);
+  document.getElementById("nb-attente").textContent = nAttente;
+  document.getElementById("badge-attente").classList.toggle("d-none", nAttente === 0);
+  document.getElementById("nb-conflit").textContent = nConflit;
+  document.getElementById("badge-conflit").classList.toggle("d-none", nConflit === 0);
+  btnSynchroniser.classList.toggle("d-none", nAttente === 0);
 }
 majCompteurAttente();
 
@@ -240,6 +258,68 @@ async function serveurJoignable() {
     return false;
   }
 }
+
+function jetonCsrf() {
+  return document.querySelector('#form-vente input[name="csrf_token"]').value;
+}
+
+async function synchroniser({ silencieux } = {}) {
+  if (!window.AquapiloDB) return;
+  const toutes = await AquapiloDB.listerVentesAttente();
+  const aEnvoyer = toutes.filter((v) => v.statut === "en_attente");
+  if (aEnvoyer.length === 0) { await majCompteurAttente(); return; }
+
+  if (!(await serveurJoignable())) {
+    if (!silencieux) alert("Toujours hors-ligne : synchronisation impossible pour l'instant.");
+    return;
+  }
+
+  btnSynchroniser.disabled = true;
+  try {
+    const reponse = await fetch("/ventes/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": jetonCsrf() },
+      body: JSON.stringify({ ventes: aEnvoyer }),
+    });
+    const { resultats } = await reponse.json();
+
+    let nSync = 0, nConflitNouveau = 0;
+    for (const r of resultats) {
+      if (r.statut === "synchronisee") {
+        await AquapiloDB.supprimerVenteAttente(r.uuid);
+        nSync++;
+      } else {
+        await AquapiloDB.marquerVenteConflit(r.uuid, r.erreur || "Erreur inconnue.");
+        nConflitNouveau++;
+      }
+    }
+    await majCompteurAttente();
+    if (!silencieux) {
+      let msg = nSync ? `${nSync} vente(s) synchronisée(s).` : "";
+      if (nConflitNouveau) msg += ` ${nConflitNouveau} en conflit — voir le détail ci-dessous.`;
+      if (msg) alert(msg);
+    }
+    await afficherConflits();
+  } catch (err) {
+    console.warn("Synchronisation échouée :", err);
+  } finally {
+    btnSynchroniser.disabled = false;
+  }
+}
+
+async function afficherConflits() {
+  const conflits = (await AquapiloDB.listerVentesAttente())
+    .filter((v) => v.statut === "conflit");
+  if (conflits.length === 0) { alerteConflit.classList.add("d-none"); return; }
+  alerteConflit.innerHTML = "<strong>Ventes en conflit — non synchronisées, à traiter :</strong><br>"
+    + conflits.map((v) => `${v.numeroProvisoire} (${fcfa(v.montantTotal)}) : ${v.erreur}`)
+               .join("<br>");
+  alerteConflit.classList.remove("d-none");
+}
+afficherConflits();
+
+btnSynchroniser.addEventListener("click", () => synchroniser());
+window.addEventListener("online", () => synchroniser({ silencieux: true }));
 
 const selBoutique = document.getElementById("sel-boutique");
 const boutiqueFixe = document.getElementById("sel-boutique-fixe");

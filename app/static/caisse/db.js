@@ -114,6 +114,32 @@
     return ventes.filter((v) => v.statut === "en_attente").length;
   }
 
+  async function compterVentesConflit() {
+    const ventes = await listerVentesAttente();
+    return ventes.filter((v) => v.statut === "conflit").length;
+  }
+
+  /** Marque une vente en conflit après un refus du serveur à la
+   * synchronisation — jamais supprimée automatiquement, seule une
+   * personne (gérance) tranche ce qu'il faut en faire. */
+  async function marquerVenteConflit(uuid, erreur) {
+    const db = await ouvrirDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction("ventes_attente", "readwrite");
+      const store = tx.objectStore("ventes_attente");
+      store.get(uuid).onsuccess = (evt) => {
+        const vente = evt.target.result;
+        if (vente) {
+          vente.statut = "conflit";
+          vente.erreur = erreur;
+          store.put(vente);
+        }
+      };
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
   /** Stock du produit dans la boutique, moins les quantités déjà mises
    * en file d'attente (non encore synchronisées) sur cet appareil. */
   async function stockLocalEffectif(produitId, boutiqueId) {
@@ -133,6 +159,7 @@
   window.AquapiloDB = {
     sauvegarderCatalogue, chargerCatalogue,
     ajouterVenteAttente, listerVentesAttente, supprimerVenteAttente,
-    compterVentesEnAttente, stockLocalEffectif,
+    compterVentesEnAttente, compterVentesConflit, marquerVenteConflit,
+    stockLocalEffectif,
   };
 })();

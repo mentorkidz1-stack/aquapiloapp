@@ -13,15 +13,19 @@ def prochain_numero_ticket(jour: date_type) -> str:
 
 
 def creer_vente(lignes_data: list[dict], mode_paiement: str, user,
-                prix_modifiables: bool, boutique_id: int | None = None) -> Vente:
+                prix_modifiables: bool, boutique_id: int | None = None,
+                date_heure: datetime | None = None) -> Vente:
     """Crée une vente multi-lignes.
 
     lignes_data : [{"produit_id": int, "quantite": Decimal, "prix": int|None}, ...]
     prix_modifiables : True uniquement pour l'admin ; sinon le prix soumis est
     IGNORÉ et remplacé par le prix catalogue (application stricte côté serveur).
+    date_heure : moment réel de la vente si différent de maintenant — utilisé
+    par /ventes/sync pour qu'une vente créée hors-ligne hier reste attribuée
+    à hier, pas au jour où elle est synchronisée.
     L'appelant committe.
     """
-    maintenant = datetime.now()
+    maintenant = date_heure or datetime.now()
     jour = maintenant.date()
     vente = Vente(
         numero_ticket=prochain_numero_ticket(jour),

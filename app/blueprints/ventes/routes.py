@@ -8,7 +8,7 @@ import json
 from datetime import date, datetime
 
 from flask import (Blueprint, render_template, redirect, url_for,
-                   flash, request, abort)
+                   flash, request, abort, jsonify)
 from flask_login import login_required, current_user
 
 from app.extensions import db
@@ -87,6 +87,75 @@ def caisse():
                            boutique_fixe=(None if current_user.is_gerant
                                           else current_user.boutique_id),
                            prix_modifiable=current_user.is_direction)
+
+
+@ventes_bp.route("/sync", methods=["POST"])
+@login_required
+def sync():
+    """Synchronise les ventes créées hors-ligne par la caisse PWA.
+
+    Idempotent par uuid_client : rejouer le même envoi (retry après une
+    coupure pendant la requête elle-même) ne crée jamais de doublon.
+    Chaque vente du lot est traitée indépendamment ; un conflit sur
+    l'une (période clôturée depuis, mode de paiement invalide...) ne
+    bloque pas les autres et n'est JAMAIS ignoré silencieusement — le
+    client garde la vente en statut "conflit" pour résolution manuelle.
+    """
+    payload = request.get_json(silent=True) or {}
+    resultats = []
+
+    for item in payload.get("ventes", []):
+        uuid_client = item.get("uuid")
+        if not uuid_client:
+            resultats.append({"uuid": None, "statut": "conflit",
+                              "erreur": "Identifiant de vente manquant."})
+            continue
+
+        existante = Vente.query.filter_by(uuid_client=uuid_client).first()
+        if existante is not None:
+            # Déjà synchronisée lors d'un envoi précédent (retry réseau) :
+            # on renvoie son numéro réel, sans rien recréer.
+            resultats.append({"uuid": uuid_client, "statut": "synchronisee",
+                              "numero_ticket": existante.numero_ticket,
+                              "vente_id": existante.id})
+            continue
+
+        try:
+            boutique_id = int(item.get("boutiqueId") or current_user.boutique_id)
+            if not current_user.is_gerant:
+                boutique_id = current_user.boutique_id  # même contrainte que la caisse en ligne
+
+            date_creation = datetime.fromtimestamp(int(item.get("dateCreation", 0)) / 1000)
+            if periode_est_cloturee(date_creation.date(), boutique_id):
+                raise ValueError(
+                    f"La période du {date_creation.strftime('%d/%m/%Y')} "
+                    "est déjà clôturée : synchronisation impossible, "
+                    "contactez un administrateur.")
+
+            mode = item.get("modePaiement", "")
+            if mode not in MODES_PAIEMENT:
+                raise ValueError("Mode de paiement invalide.")
+
+            lignes_data = [{"produit_id": l.get("produit_id"),
+                            "quantite": l.get("quantite"), "prix": l.get("prix")}
+                           for l in item.get("lignes", [])]
+
+            vente = creer_vente(
+                lignes_data, mode, current_user,
+                prix_modifiables=current_user.is_direction,
+                boutique_id=boutique_id, date_heure=date_creation,
+            )
+            vente.uuid_client = uuid_client
+            db.session.commit()
+            resultats.append({"uuid": uuid_client, "statut": "synchronisee",
+                              "numero_ticket": vente.numero_ticket,
+                              "vente_id": vente.id})
+        except Exception as e:
+            db.session.rollback()
+            resultats.append({"uuid": uuid_client, "statut": "conflit",
+                              "erreur": str(e) or "Erreur inconnue."})
+
+    return jsonify({"resultats": resultats})
 
 
 # ---------------- JOURNAL ----------------

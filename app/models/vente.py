@@ -16,6 +16,11 @@ class Vente(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     numero_ticket = db.Column(db.String(20), unique=True, nullable=False)
+    # Identifiant généré côté client pour les ventes créées hors-ligne
+    # (caisse PWA) : rend /ventes/sync idempotent — un même envoi rejoué
+    # après coupure réseau ne crée jamais deux fois la même vente.
+    # NULL pour toute vente créée normalement en ligne.
+    uuid_client = db.Column(db.String(36), unique=True, nullable=True, index=True)
     date_vente = db.Column(db.Date, nullable=False, default=date.today, index=True)
     heure_vente = db.Column(db.Time, nullable=False)
     mode_paiement = db.Column(db.Enum(*MODES_PAIEMENT, name="mode_paiement_enum"),

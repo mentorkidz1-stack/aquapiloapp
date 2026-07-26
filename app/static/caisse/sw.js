@@ -14,7 +14,7 @@
  *   jamais de raison de changer entre deux déploiements sans purge de
  *   version.
  */
-const VERSION = "v5";
+const VERSION = "v6";
 const CACHE_STATIQUE = `aquapilo-caisse-statique-${VERSION}`;
 const CACHE_PAGE = `aquapilo-caisse-page-${VERSION}`;
 
