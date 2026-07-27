@@ -13,9 +13,20 @@ MODES_LIBELLES = {
 
 class Vente(db.Model):
     __tablename__ = "ventes"
+    __table_args__ = (
+        # Unique PAR ENTREPRISE, pas globalement : la numérotation
+        # (prochain_numero_ticket) compte les ventes DE CE TENANT
+        # uniquement, donc deux entreprises clientes différentes calculent
+        # légitimement le même numéro pour leur 1re vente du jour (ex.
+        # V-20260727-0001 chacune) — une contrainte globale bloquait alors
+        # systématiquement toutes les entreprises sauf la première à avoir
+        # pris ce numéro.
+        db.UniqueConstraint("entreprise_id", "numero_ticket",
+                            name="uq_ventes_entreprise_numero_ticket"),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
-    numero_ticket = db.Column(db.String(20), unique=True, nullable=False)
+    numero_ticket = db.Column(db.String(20), nullable=False)
     # Identifiant généré côté client pour les ventes créées hors-ligne
     # (caisse PWA) : rend /ventes/sync idempotent — un même envoi rejoué
     # après coupure réseau ne crée jamais deux fois la même vente.
