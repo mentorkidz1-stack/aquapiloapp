@@ -3,12 +3,8 @@
  * "produits"/"meta"  : copie persistante du catalogue + horodatage de
  *                      dernière synchronisation (phase 2).
  * "ventes_attente"    : ventes créées hors-ligne, en attente d'envoi au
- *                      serveur (phase 3). Le stock "local effectif" d'un
- *                      produit est le stock connu du catalogue MOINS les
- *                      quantités déjà mises en file pour ce produit dans
- *                      la même boutique — pour ne jamais vendre deux fois
- *                      le même dernier kilo depuis le même appareil avant
- *                      la synchronisation.
+ *                      serveur (phase 3). Le stock n'est jamais vérifié
+ *                      avant la mise en file, ni ici ni côté serveur.
  */
 (function () {
   const NOM_DB = "aquapilo-caisse";
@@ -140,26 +136,9 @@
     });
   }
 
-  /** Stock du produit dans la boutique, moins les quantités déjà mises
-   * en file d'attente (non encore synchronisées) sur cet appareil. */
-  async function stockLocalEffectif(produitId, boutiqueId) {
-    const [{ produits }, ventes] = await Promise.all([
-      chargerCatalogue(), listerVentesAttente(),
-    ]);
-    const produit = produits.find((p) => p.id === produitId);
-    const stockCatalogue = produit ? (produit.stocks[boutiqueId] ?? 0) : 0;
-    const dejaEnAttente = ventes
-      .filter((v) => v.statut === "en_attente" && v.boutiqueId === boutiqueId)
-      .flatMap((v) => v.lignes)
-      .filter((l) => l.produit_id === produitId)
-      .reduce((somme, l) => somme + l.quantite, 0);
-    return stockCatalogue - dejaEnAttente;
-  }
-
   window.AquapiloDB = {
     sauvegarderCatalogue, chargerCatalogue,
     ajouterVenteAttente, listerVentesAttente, supprimerVenteAttente,
     compterVentesEnAttente, compterVentesConflit, marquerVenteConflit,
-    stockLocalEffectif,
   };
 })();

@@ -551,20 +551,13 @@ document.getElementById("form-vente").addEventListener("submit", async (e) => {
     return;
   }
 
-  // Hors-ligne : refuser si le stock local (catalogue moins les ventes
-  // déjà en file sur cet appareil) est insuffisant pour une des lignes.
+  // Hors-ligne : le stock n'est jamais vérifié (comme en ligne, où le
+  // serveur ne bloque pas non plus une vente sur le stock) — la vente
+  // est mise en file et le ticket imprimé sans condition.
   if (!window.AquapiloDB) {
     alert("Connexion indisponible et stockage local non pris en charge par ce navigateur : vente impossible pour l'instant.");
     btnValider.disabled = false;
     return;
-  }
-  for (const l of lignes) {
-    const stockEffectif = await AquapiloDB.stockLocalEffectif(l.produit_id, boutiqueId);
-    if (stockEffectif < l.quantite) {
-      alert(`Stock local insuffisant pour "${l.nom}" (${stockEffectif} disponible(s) sur cet appareil) — vente hors-ligne refusée. Ajustez la quantité ou réessayez une fois la connexion revenue.`);
-      btnValider.disabled = false;
-      return;
-    }
   }
 
   await mettreEnFileAttente(boutiqueId);
