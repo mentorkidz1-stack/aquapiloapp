@@ -22,10 +22,11 @@ def journee():
         jour = date.fromisoformat(request.args.get("jour", ""))
     except ValueError:
         jour = date.today()
-    boutique_id = request.args.get("boutique_id", type=int) or 1
-    lignes = actualiser_stocks_du_jour(jour, boutique_id)
-    db.session.commit()
     boutiques = Boutique.query.filter_by(actif=True).order_by(Boutique.id).all()
+    boutique_id = (request.args.get("boutique_id", type=int)
+                   or (boutiques[0].id if boutiques else None))
+    lignes = actualiser_stocks_du_jour(jour, boutique_id) if boutique_id else []
+    db.session.commit()
     return render_template("stocks/journee.html", lignes=lignes, jour=jour,
                            boutiques=boutiques, boutique_id=boutique_id,
                            aujourdhui=date.today())
@@ -43,9 +44,10 @@ def comptage():
         return redirect(url_for("stocks.journee"))
 
     try:
-        boutique_id = int(request.form.get("boutique_id", 1))
+        boutique_id = int(request.form.get("boutique_id", ""))
     except (TypeError, ValueError):
-        boutique_id = 1
+        premiere = Boutique.query.filter_by(actif=True).order_by(Boutique.id).first()
+        boutique_id = premiere.id if premiere else None
     lignes = actualiser_stocks_du_jour(jour, boutique_id)
     saisis = 0
     for sj in lignes:
