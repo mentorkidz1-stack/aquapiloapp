@@ -63,7 +63,9 @@
         <td>{{ d.telephone }}</td>
         <td>{{ d.email }}</td>
         <td class="text-end">{{ d.nombre_boutiques }}</td>
-        <td class="text-end">
+        <td class="text-end text-nowrap">
+          <a href="{{ url_for('operateur.detail_demande', demande_id=d.id) }}"
+             class="btn btn-sm btn-outline-secondary">Détail</a>
           <a href="{{ url_for('operateur.activer', demande_id=d.id) }}" class="btn btn-sm btn-primary">
             <i class="bi bi-check-lg"></i> Activer</a>
         </td>
@@ -128,11 +130,15 @@
   <h2 class="h6 text-muted mb-2">Dernières demandes traitées</h2>
   <div class="table-responsive">
   <table class="table table-sm">
-    <thead class="table-light"><tr><th>Reçue le</th><th>Poissonnerie</th><th>Responsable</th></tr></thead>
+    <thead class="table-light"><tr><th>Reçue le</th><th>Poissonnerie</th><th>Responsable</th><th></th></tr></thead>
     <tbody>
     {% for d in demandes_traitees %}
       <tr><td>{{ d.created_at.strftime("%d/%m/%Y") }}</td>
-          <td>{{ d.nom_poissonnerie }}</td><td>{{ d.responsable }}</td></tr>
+          <td>{{ d.nom_poissonnerie }}</td><td>{{ d.responsable }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('operateur.detail_demande', demande_id=d.id) }}"
+               class="btn btn-sm btn-outline-secondary">Détail</a>
+          </td></tr>
     {% endfor %}
     </tbody>
   </table>

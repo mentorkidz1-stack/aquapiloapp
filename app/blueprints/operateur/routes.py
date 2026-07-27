@@ -141,6 +141,13 @@ def activer(demande_id):
     return render_template("operateur/activer.html", form=form, demande=demande)
 
 
+@operateur_bp.route("/demandes/<int:demande_id>")
+@operateur_required
+def detail_demande(demande_id):
+    demande = db.get_or_404(DemandeAcces, demande_id)
+    return render_template("operateur/demande_detail.html", demande=demande)
+
+
 @operateur_bp.route("/entreprises/<int:entreprise_id>/statut", methods=["POST"])
 @operateur_required
 def changer_statut(entreprise_id):

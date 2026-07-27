@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Détail — {{ demande.nom_poissonnerie }}{% endblock %}
+{% block content %}
+<div class="barre-mobile navbar navbar-dark px-3 d-flex justify-content-between align-items-center">
+  <span class="navbar-brand fw-bold mb-0"><i class="bi bi-water"></i> Aquapilo · Opérateur</span>
+  <a href="{{ url_for('operateur.logout') }}" class="btn btn-sm btn-outline-light">
+    <i class="bi bi-box-arrow-right"></i> Déconnexion</a>
+</div>
+
+<div class="p-3 p-lg-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Détail de la demande</h1>
+    <a href="{{ url_for('operateur.dashboard') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Tableau de bord</a>
+  </div>
+
+  <div class="card border-0 shadow-sm" style="max-width: 560px;">
+    <div class="card-body">
+      <h2 class="h5 mb-3">{{ demande.nom_poissonnerie }}</h2>
+      <dl class="row mb-0">
+        <dt class="col-5 col-sm-4 text-muted fw-normal">Responsable</dt>
+        <dd class="col-7 col-sm-8">{{ demande.responsable }}</dd>
+
+        <dt class="col-5 col-sm-4 text-muted fw-normal">Téléphone</dt>
+        <dd class="col-7 col-sm-8">
+          <a href="tel:{{ demande.telephone }}">{{ demande.telephone }}</a>
+        </dd>
+
+        <dt class="col-5 col-sm-4 text-muted fw-normal">Email</dt>
+        <dd class="col-7 col-sm-8">
+          <a href="mailto:{{ demande.email }}">{{ demande.email }}</a>
+        </dd>
+
+        <dt class="col-5 col-sm-4 text-muted fw-normal">Boutiques demandées</dt>
+        <dd class="col-7 col-sm-8">{{ demande.nombre_boutiques }}</dd>
+
+        <dt class="col-5 col-sm-4 text-muted fw-normal">Reçue le</dt>
+        <dd class="col-7 col-sm-8">{{ demande.created_at.strftime("%d/%m/%Y %H:%M") }}</dd>
+
+        <dt class="col-5 col-sm-4 text-muted fw-normal">Statut</dt>
+        <dd class="col-7 col-sm-8">
+          {% if demande.traite %}
+          <span class="badge bg-success">Traitée</span>
+          {% else %}
+          <span class="badge bg-warning text-dark">En attente</span>
+          {% endif %}
+        </dd>
+      </dl>
+
+      {% if not demande.traite %}
+      <a href="{{ url_for('operateur.activer', demande_id=demande.id) }}"
+         class="btn btn-primary mt-3">
+        <i class="bi bi-check-lg"></i> Activer cette demande</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
