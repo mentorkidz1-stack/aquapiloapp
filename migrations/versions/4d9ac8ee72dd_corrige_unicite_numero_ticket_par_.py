@@ -14,14 +14,17 @@ première à avoir pris ce numéro ce jour-là.
 
 L'ancienne contrainte unique sur numero_ticket seul n'a jamais été
 nommée explicitement dans la migration d'origine (sa.UniqueConstraint
-('numero_ticket') sans nom) : impossible à cibler par nom de façon
-fiable sur SQLite (contrainte anonyme, non exposée nommée par
-l'inspecteur) ni en toute confiance sur MySQL (nom par défaut variable
-selon la version). On recrée donc la table par lot (batch) en pointant
-explicitement sur la définition actuelle du modèle Vente, qui ne
-contient plus que la nouvelle contrainte composite — la façon la plus
-sûre de garantir que l'ancienne contrainte disparaît, quel que soit le
-moteur.
+('numero_ticket') sans nom). Sur SQLite, l'inspecteur ne l'expose pas
+avec un nom exploitable : on recrée la table par lot (batch) en
+pointant sur la définition actuelle du modèle Vente, seule méthode
+fiable sur ce moteur. Sur MySQL, la table est référencée par une clé
+étrangère (vente_lignes.vente_id) : un DROP/CREATE de la table entière
+(recreate='always') échoue avec l'erreur 3730 ("Cannot drop table
+'ventes' referenced by a foreign key constraint"). MySQL nomme
+correctement les index/contraintes et sait les modifier par un simple
+ALTER TABLE ciblé, sans jamais recréer la table : on découvre le nom
+réel via l'inspecteur puis on le supprime avant de créer la nouvelle
+contrainte composite.
 """
 from alembic import op
 import sqlalchemy as sa
@@ -34,16 +37,50 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
-    from app.models import Vente  # définition actuelle : source de vérité du recreate
+def _noms_contrainte_numero_ticket(insp):
+    noms = set()
+    for uc in insp.get_unique_constraints('ventes'):
+        if uc['column_names'] == ['numero_ticket']:
+            noms.add(uc['name'])
+    for idx in insp.get_indexes('ventes'):
+        if idx.get('unique') and idx['column_names'] == ['numero_ticket']:
+            noms.add(idx['name'])
+    return noms
 
-    with op.batch_alter_table('ventes', schema=None,
-                              copy_from=Vente.__table__,
-                              recreate='always') as batch_op:
-        pass
+
+def upgrade():
+    bind = op.get_bind()
+
+    if bind.dialect.name == 'sqlite':
+        from app.models import Vente  # définition actuelle : source de vérité du recreate
+
+        with op.batch_alter_table('ventes', schema=None,
+                                  copy_from=Vente.__table__,
+                                  recreate='always') as batch_op:
+            pass
+        return
+
+    # MySQL (et tout moteur avec ALTER TABLE natif) : pas de recréation de
+    # table, juste un remplacement de contrainte en place.
+    insp = sa.inspect(bind)
+    for nom in _noms_contrainte_numero_ticket(insp):
+        try:
+            op.drop_constraint(nom, 'ventes', type_='unique')
+        except Exception:
+            op.drop_index(nom, table_name='ventes')
+    op.create_unique_constraint(
+        'uq_ventes_entreprise_numero_ticket', 'ventes',
+        ['entreprise_id', 'numero_ticket'])
 
 
 def downgrade():
-    with op.batch_alter_table('ventes', schema=None) as batch_op:
-        batch_op.drop_constraint('uq_ventes_entreprise_numero_ticket', type_='unique')
-        batch_op.create_unique_constraint('numero_ticket', ['numero_ticket'])
+    bind = op.get_bind()
+
+    if bind.dialect.name == 'sqlite':
+        with op.batch_alter_table('ventes', schema=None) as batch_op:
+            batch_op.drop_constraint('uq_ventes_entreprise_numero_ticket', type_='unique')
+            batch_op.create_unique_constraint('numero_ticket', ['numero_ticket'])
+        return
+
+    op.drop_constraint('uq_ventes_entreprise_numero_ticket', 'ventes', type_='unique')
+    op.create_unique_constraint('numero_ticket', 'ventes', ['numero_ticket'])
