@@ -157,6 +157,41 @@
   maj();
   setInterval(maj, 1000);
 })();
+
+// Sécurité PWA : le service worker de la caisse met en cache la page
+// entière (catalogue produits, nom d'entreprise) par ORIGINE, pas par
+// session — si cet appareil/navigateur a servi à une AUTRE entreprise
+// avant (ex. tests/activation par l'opérateur), la page mise en cache
+// contient encore les données de celle-ci. Dès qu'on détecte un
+// changement d'entreprise sur cet appareil, on purge la page mise en
+// cache et le catalogue local (jamais la file d'attente des ventes
+// hors-ligne non synchronisées : on ne perd jamais une vente réelle).
+(function () {
+  const idActuel = {{ current_user.entreprise_id | tojson }};
+  const idPrecedent = localStorage.getItem("aquapilo_entreprise_id");
+  if (idPrecedent !== null && idPrecedent !== String(idActuel)) {
+    if ("caches" in window) {
+      caches.keys().then((noms) => {
+        noms.filter((n) => n.startsWith("aquapilo-caisse-"))
+            .forEach((n) => caches.delete(n));
+      });
+    }
+    if ("indexedDB" in window) {
+      const req = indexedDB.open("aquapilo-caisse");
+      req.onsuccess = () => {
+        const bdd = req.result;
+        if (bdd.objectStoreNames.contains("produits")
+            && bdd.objectStoreNames.contains("meta")) {
+          const tx = bdd.transaction(["produits", "meta"], "readwrite");
+          tx.objectStore("produits").clear();
+          tx.objectStore("meta").clear();
+        }
+        bdd.close();
+      };
+    }
+  }
+  localStorage.setItem("aquapilo_entreprise_id", String(idActuel));
+})();
 </script>
 {% endif %}
 {% block scripts %}{% endblock %}
