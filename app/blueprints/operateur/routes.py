@@ -13,6 +13,7 @@ import string
 
 from flask import (Blueprint, render_template, redirect, url_for, flash,
                    session, request, current_app)
+from flask_login import current_user, logout_user
 
 from app.extensions import db, bcrypt
 from app.models import Boutique, DemandeAcces, Entreprise, User
@@ -44,6 +45,8 @@ def login():
         mdp_ok = bool(hash_attendu) and bcrypt.check_password_hash(
             hash_attendu, form.password.data)
         if identifiant_ok and mdp_ok:
+            if current_user.is_authenticated:
+                logout_user()
             session.clear()
             session["operateur_authentifie"] = True
             session.permanent = True

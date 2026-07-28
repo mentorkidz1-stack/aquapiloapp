@@ -169,7 +169,11 @@
 (function () {
   const idActuel = {{ current_user.entreprise_id | tojson }};
   const idPrecedent = localStorage.getItem("aquapilo_entreprise_id");
-  if (idPrecedent !== null && idPrecedent !== String(idActuel)) {
+  // Y compris au tout premier passage sur cet appareil (idPrecedent
+  // absent) : un appareil ayant déjà servi AVANT ce correctif peut
+  // porter un cache pollué sans qu'aucune valeur n'ait jamais été
+  // enregistrée ici — ne jamais faire confiance par défaut.
+  if (idPrecedent !== String(idActuel)) {
     if ("caches" in window) {
       caches.keys().then((noms) => {
         noms.filter((n) => n.startsWith("aquapilo-caisse-"))

@@ -7,6 +7,7 @@ import hmac
 
 from flask import (Blueprint, render_template, redirect, url_for, flash,
                    session, current_app)
+from flask_login import current_user, logout_user
 
 from app.extensions import bcrypt
 from app.services.facturation import detail_entreprises, total_mensuel_actif
@@ -32,6 +33,8 @@ def login():
                        if hmac.compare_digest(fourni, a["username"])), None)
         if (trouve and trouve.get("password_hash")
                 and bcrypt.check_password_hash(trouve["password_hash"], form.password.data)):
+            if current_user.is_authenticated:
+                logout_user()
             session.clear()
             session["associe_username"] = trouve["username"]
             session.permanent = True
