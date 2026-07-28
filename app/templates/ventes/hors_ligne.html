@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Ventes hors-ligne{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Ventes réalisées hors-ligne</h1>
+</div>
+<p class="text-muted small">
+  Ventes créées depuis la caisse sans connexion, puis synchronisées avec
+  le serveur.
+  {% if not current_user.is_gerant %}
+  Vous ne voyez que celles de votre boutique.
+  {% endif %}
+</p>
+
+<div class="table-responsive">
+<table class="table table-hover bg-white shadow-sm align-middle">
+  <thead class="table-light">
+    <tr><th>Date</th><th>Ticket</th><th>Boutique</th><th>Vendeur</th>
+        <th class="text-end">Montant</th><th>Paiement</th><th>Statut</th><th></th></tr>
+  </thead>
+  <tbody>
+  {% for v in ventes %}
+    <tr class="{{ 'table-secondary text-muted' if v.statut == 'annule' }}">
+      <td class="text-nowrap">{{ v.date_vente.strftime("%d/%m/%Y") }} {{ v.heure_vente.strftime("%H:%M") }}</td>
+      <td>{{ v.numero_ticket }}</td>
+      <td>{{ noms_boutiques.get(v.boutique_id, "") }}</td>
+      <td>{{ v.user.nom_complet }}</td>
+      <td class="text-end">{{ v.montant_total | fcfa }}</td>
+      <td>{{ modes.get(v.mode_paiement, v.mode_paiement) }}</td>
+      <td>
+        {% if v.statut == 'annule' %}
+        <span class="badge bg-secondary">Annulée</span>
+        {% else %}
+        <span class="badge bg-success">Valide</span>
+        {% endif %}
+      </td>
+      <td class="text-end text-nowrap">
+        <a href="{{ url_for('ventes.ticket', vente_id=v.id) }}"
+           class="btn btn-sm btn-outline-secondary" title="Voir / réimprimer">
+          <i class="bi bi-printer"></i></a>
+        {% if v.statut == 'valide' %}
+        <form method="post" action="{{ url_for('ventes.annuler', vente_id=v.id) }}"
+              class="d-inline"
+              onsubmit="return confirm('Annuler la vente {{ v.numero_ticket }} ?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm btn-outline-danger" title="Annuler">
+            <i class="bi bi-x-circle"></i></button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="8" class="text-center text-muted py-4">
+      <i class="bi bi-inbox fs-4 d-block mb-1"></i>Aucune vente hors-ligne pour l'instant.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

@@ -53,6 +53,9 @@
           href="{{ url_for('ventes.journal') }}">
         <i class="bi bi-receipt"></i> Ventes</a></li>
       {% endif %}
+      <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'ventes.hors_ligne' }}"
+          href="{{ url_for('ventes.hors_ligne') }}">
+        <i class="bi bi-wifi-off"></i> Ventes hors-ligne</a></li>
       {% if current_user.is_gerant %}
       <li class="nav-item"><a class="nav-link {{ 'active' if request.blueprint == 'produits' }}"
           href="{{ url_for('produits.liste') }}">
@@ -92,6 +95,9 @@
          href="{{ url_for('admin.utilisateurs') }}">
         <i class="bi bi-people"></i> Utilisateurs</a>
       {% endif %}
+      <a class="nav-link px-0 py-1 {{ 'active' if request.endpoint == 'auth.changer_mot_de_passe' }}"
+         href="{{ url_for('auth.changer_mot_de_passe') }}">
+        <i class="bi bi-key"></i> Changer mon mot de passe</a>
     </div>
   </div>
 </div>

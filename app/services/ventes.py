@@ -52,13 +52,15 @@ def creer_vente(lignes_data: list[dict], mode_paiement: str, user,
 
         montant = int((quantite * Decimal(prix_applique))
                       .quantize(Decimal("1"), rounding=ROUND_HALF_UP))
-        cmup = produit.cmup_actuel
-        marge = int(((Decimal(prix_applique) - Decimal(cmup)) * quantite)
+        # Marge = prix de vente - prix d'achat (pas le CMUP, qui reste
+        # utilisé séparément pour la valorisation du stock/des pertes).
+        cout = produit.prix_achat
+        marge = int(((Decimal(prix_applique) - Decimal(cout)) * quantite)
                     .quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
         specs.append(dict(
             produit_id=produit.id, quantite=quantite, prix_catalogue=prix_catalogue,
-            prix_applique=prix_applique, montant=montant, cmup_au_moment=cmup,
+            prix_applique=prix_applique, montant=montant, cmup_au_moment=cout,
             marge=marge,
         ))
         total += montant
@@ -107,10 +109,12 @@ def contexte_ticket(vente: Vente) -> dict:
             "prix": l.prix_applique,
             "montant": l.montant,
         })
-    from app.models import Boutique
+    from app.models import Boutique, Entreprise
     boutique = db.session.get(Boutique, vente.boutique_id)
+    entreprise = db.session.get(Entreprise, vente.entreprise_id)
     return {
         "numero_ticket": vente.numero_ticket,
+        "entreprise": entreprise.nom if entreprise else "",
         "boutique": boutique.nom if boutique else "",
         "date_heure": datetime.combine(vente.date_vente, vente.heure_vente),
         "vendeur": vente.user.nom_complet,

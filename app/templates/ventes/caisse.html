@@ -158,6 +158,10 @@
     <span>TOTAL</span><span id="tk-total"></span>
   </div>
   <div id="tk-paiement"></div>
+  <div style="border-top:1px dashed #000; margin:4px 0;"></div>
+  <div style="text-align:center; margin-top:6px; font-size:10px;">
+    Merci de votre visite !<br>À bientôt
+  </div>
   <div style="text-align:center; margin-top:6px; font-size:10px;">
     Ticket provisoire — numéro définitif attribué à la synchronisation.
   </div>
@@ -477,7 +481,8 @@ btnAjouter.addEventListener("click", () => {
   lignes.push({
     produit_id: p.id, nom: p.nom,
     quantite: qte,
-    quantiteAff: qte.toLocaleString("fr-FR") + (p.unite === "kg" ? " kg" : " pc"),
+    quantiteAff: qte.toLocaleString("fr-FR")
+      + (p.unite === "kg" ? " kg" : (qte === 1 ? " pièce" : " pièces")),
     prix: prix,
     montant: Math.round(qte * prix),
   });
@@ -494,7 +499,9 @@ btnAjouter.addEventListener("click", () => {
 function afficherTicketHorsLigne(vente) {
   document.getElementById("tk-boutique").textContent = vente.nomBoutique;
   document.getElementById("tk-numero").textContent = vente.numeroProvisoire;
-  document.getElementById("tk-date").textContent = new Date(vente.dateCreation).toLocaleString("fr-FR");
+  const d = new Date(vente.dateCreation);
+  document.getElementById("tk-date").textContent = d.toLocaleDateString("fr-FR")
+    + " " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   document.getElementById("tk-lignes").innerHTML = vente.lignes.map((l) => `
     <div style="margin-top:2px; font-weight:bold;">${l.nom}</div>
     <div style="display:flex; justify-content:space-between;">

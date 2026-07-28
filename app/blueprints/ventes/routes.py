@@ -205,6 +205,22 @@ def journal():
                            mode=mode)
 
 
+# ---------------- VENTES HORS-LIGNE (caissier + gérant) ----------------
+@ventes_bp.route("/hors-ligne")
+@login_required
+def hors_ligne():
+    """Ventes synchronisées depuis la caisse hors-ligne (uuid_client non
+    nul). Un caissier ne voit que celles de sa propre boutique — même
+    restriction que pour la consultation d'un ticket individuel."""
+    requete = Vente.query.filter(Vente.uuid_client.isnot(None))
+    if not current_user.is_gerant:
+        requete = requete.filter_by(boutique_id=current_user.boutique_id)
+    ventes = requete.order_by(Vente.id.desc()).all()
+    noms_boutiques = {b.id: b.nom for b in _boutiques()}
+    return render_template("ventes/hors_ligne.html", ventes=ventes,
+                           noms_boutiques=noms_boutiques, modes=MODES_LIBELLES)
+
+
 # ---------------- TICKET (impression / réimpression) ----------------
 @ventes_bp.route("/<int:vente_id>/ticket")
 @login_required
@@ -218,12 +234,18 @@ def ticket(vente_id):
                            demo=False, annulee=(vente.statut == "annule"))
 
 
-# ---------------- ANNULATION (gérant / direction) ----------------
+# ---------------- ANNULATION (gérant / direction, ou caissier pour ses
+# propres ventes hors-ligne synchronisées) ----------------
 @ventes_bp.route("/<int:vente_id>/annuler", methods=["POST"])
 @login_required
-@role_required("gerant")
 def annuler(vente_id):
     vente = db.get_or_404(Vente, vente_id)
+    if not current_user.is_gerant:
+        # Un caissier ne peut annuler qu'une vente hors-ligne de sa
+        # propre boutique — jamais une vente en ligne, ni celle d'une
+        # autre boutique.
+        if vente.uuid_client is None or vente.boutique_id != current_user.boutique_id:
+            abort(403)
     if periode_est_cloturee(vente.date_vente, vente.boutique_id):
         flash("Période clôturée : impossible d'annuler cette vente. "
               "Demandez à un administrateur de rouvrir la période.", "danger")
@@ -234,7 +256,9 @@ def annuler(vente_id):
         db.session.commit()
         flash(f"Vente {vente.numero_ticket} annulée. "
               "Le stock a été automatiquement restitué.", "success")
-    return redirect(url_for("ventes.journal", jour=vente.date_vente.isoformat()))
+    if current_user.is_gerant:
+        return redirect(url_for("ventes.journal", jour=vente.date_vente.isoformat()))
+    return redirect(url_for("ventes.hors_ligne"))
 
 
 # ---------------- DÉMO ticket (test d'impression) ----------------
@@ -243,6 +267,7 @@ def annuler(vente_id):
 def ticket_demo():
     vente_demo = {
         "numero_ticket": "V-20260702-0042",
+        "entreprise": current_user.entreprise.nom,
         "date_heure": datetime.now(),
         "vendeur": current_user.nom_complet,
         "boutique": "Boutique 1 Marché",

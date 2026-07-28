@@ -4,7 +4,8 @@ from datetime import date
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
 
-from app.blueprints.auth.forms import LoginForm
+from app.extensions import db
+from app.blueprints.auth.forms import LoginForm, ChangerMotDePasseForm
 from app.models import User
 from app.services.tenant import sans_filtre_tenant
 
@@ -39,6 +40,21 @@ def login():
         flash("Identifiants incorrects ou compte désactivé.", "danger")
 
     return render_template("auth/login.html", form=form, annee=date.today().year)
+
+
+@auth_bp.route("/mot-de-passe", methods=["GET", "POST"])
+@login_required
+def changer_mot_de_passe():
+    form = ChangerMotDePasseForm()
+    if form.validate_on_submit():
+        if not current_user.check_password(form.mot_de_passe_actuel.data):
+            flash("Mot de passe actuel incorrect.", "danger")
+        else:
+            current_user.set_password(form.nouveau_mot_de_passe.data)
+            db.session.commit()
+            flash("Mot de passe changé avec succès.", "success")
+            return redirect(url_for("main.dashboard"))
+    return render_template("auth/changer_mot_de_passe.html", form=form)
 
 
 @auth_bp.route("/logout")
