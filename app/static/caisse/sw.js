@@ -14,7 +14,7 @@
  *   jamais de raison de changer entre deux déploiements sans purge de
  *   version.
  */
-const VERSION = "v7";
+const VERSION = "v8";
 const CACHE_STATIQUE = `aquapilo-caisse-statique-${VERSION}`;
 const CACHE_PAGE = `aquapilo-caisse-page-${VERSION}`;
 
@@ -29,6 +29,7 @@ const RESSOURCES_STATIQUES = [
   "/static/vendor/manifest/icone-192.png",
   "/static/vendor/manifest/icone-512.png",
   "/static/caisse/db.js",
+  "/static/caisse/ticket-hors-ligne.html",
 ];
 
 self.addEventListener("install", (event) => {

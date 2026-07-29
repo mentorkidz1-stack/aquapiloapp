@@ -458,72 +458,18 @@ btnAjouter.addEventListener("click", () => {
 });
 
 // ---------- Ticket provisoire (vente hors-ligne, phase 3) ----------
-// Imprimé dans une iframe isolée plutôt qu'en cachant le reste de la
-// page caisse : cette dernière approche laissait le moteur d'impression
-// calculer la mise en page sur tout le document (recherche, ticket en
-// cours, boutons...), ce qui le faisait retomber sur du A4 au lieu du
-// gabarit thermique 58 mm — exactement le même document minimal,
-// autonome, que la page ticket.html du ticket en ligne.
+// L'iframe cachée s'est révélée peu fiable pour @page sur certains
+// navigateurs mobiles (Android notamment) : certains impriment le
+// document parent au lieu de l'iframe, ou ignorent son @page. On
+// navigue donc vers une vraie page statique dédiée, précachée par le
+// service worker (donc disponible hors-ligne dès le premier chargement)
+// — exactement le même mécanisme que la page ticket.html du ticket en
+// ligne : une vraie page autonome avec son propre bouton "Imprimer".
 function imprimerTicketHorsLigne(vente) {
-  const lignesHtml = vente.lignes.map((l) => `
-    <div class="ligne-produit bold">${l.nom}</div>
-    <div class="ligne-detail">
-      <span>${l.quantiteAff} x ${l.prix.toLocaleString("fr-FR")}</span>
-      <span>${l.montant.toLocaleString("fr-FR")} F</span>
-    </div>`).join("");
-  const d = new Date(vente.dateCreation);
-  const dateAff = d.toLocaleDateString("fr-FR")
-    + " " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-
-  const html = `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8">
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: "Courier New", Courier, monospace; font-size: 11px; line-height: 1.35; }
-  .ticket { width: 48mm; padding: 2mm 1mm; }
-  .center { text-align: center; }
-  .bold { font-weight: bold; }
-  .sep { border-top: 1px dashed #000; margin: 4px 0; }
-  .ligne-produit { margin-top: 2px; }
-  .ligne-detail { display: flex; justify-content: space-between; }
-  .total { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin: 4px 0; }
-  .footer { margin-top: 6px; font-size: 10px; }
-  @page { size: 58mm auto; margin: 0; }
-</style></head>
-<body>
-<div class="ticket">
-  <div class="center bold" style="font-size:13px;">${ENTREPRISE_NOM}</div>
-  <div class="center">${vente.nomBoutique || ""}</div>
-  <div class="sep"></div>
-  <div class="center bold" style="border:2px solid #000; padding:2px; margin:4px 0;">
-    *** PROVISOIRE — EN ATTENTE DE SYNCHRONISATION ***
-  </div>
-  <div>Ticket : ${vente.numeroProvisoire}</div>
-  <div>${dateAff}</div>
-  <div>Vendeur : ${VENDEUR_NOM}</div>
-  <div class="sep"></div>
-  ${lignesHtml}
-  <div class="sep"></div>
-  <div class="total"><span>TOTAL</span><span>${fcfa(vente.montantTotal)}</span></div>
-  <div>Paiement : ${vente.modeLibelle}</div>
-  <div class="sep"></div>
-  <div class="center footer">
-    Ticket provisoire — numéro définitif attribué à la synchronisation.<br>
-    Merci de votre visite !<br>À bientôt
-  </div>
-</div>
-</body></html>`;
-
-  const iframe = document.createElement("iframe");
-  iframe.style.position = "fixed";
-  iframe.style.top = "-10000px";
-  iframe.srcdoc = html;
-  document.body.appendChild(iframe);
-  iframe.onload = () => {
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-    setTimeout(() => iframe.remove(), 1000);
-  };
+  sessionStorage.setItem("aquapilo_ticket_hors_ligne", JSON.stringify({
+    ...vente, entrepriseNom: ENTREPRISE_NOM, vendeurNom: VENDEUR_NOM,
+  }));
+  window.location.href = "/static/caisse/ticket-hors-ligne.html";
 }
 
 async function mettreEnFileAttente(boutiqueId) {

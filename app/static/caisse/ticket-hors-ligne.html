@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ticket provisoire</title>
+<style>
+  /* ===== Gabarit thermique 58 mm — identique à ventes/ticket.html ===== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 11px;
+    line-height: 1.35;
+    background: #e9ecef;
+  }
+  .ticket {
+    width: 48mm;
+    margin: 16px auto;
+    padding: 3mm 1.5mm;
+    background: #fff;
+  }
+  .center { text-align: center; }
+  .bold { font-weight: bold; }
+  .sep { border-top: 1px dashed #000; margin: 4px 0; }
+  .ligne-produit { margin-top: 2px; }
+  .ligne-detail { display: flex; justify-content: space-between; }
+  .total { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin: 4px 0; }
+  .footer { margin-top: 6px; font-size: 10px; }
+
+  .actions {
+    text-align: center;
+    margin: 16px auto;
+    font-family: system-ui, sans-serif;
+  }
+  .actions button, .actions a {
+    display: inline-block;
+    padding: 12px 24px;
+    margin: 0 4px;
+    font-size: 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .btn-print { background: #1f4e79; color: #fff; }
+  .btn-back { background: #6c757d; color: #fff; }
+
+  @media print {
+    @page { size: 58mm auto; margin: 0; }
+    body { background: #fff; }
+    .ticket { width: 48mm; margin: 0 auto; padding: 2mm 1mm; }
+    .actions { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ticket" id="ticket">
+  <div class="center">Ticket introuvable — retournez à la caisse.</div>
+</div>
+
+<div class="actions">
+  <button class="btn-print" onclick="window.print()">Imprimer le ticket</button>
+  <a class="btn-back" href="/ventes/caisse">Retour à la caisse</a>
+</div>
+
+<script>
+// Les données de la vente hors-ligne sont déposées dans sessionStorage
+// par la page caisse juste avant la navigation vers cette page statique
+// (précachée par le service worker, donc disponible même hors-ligne) —
+// exactement le même principe que la page ticket.html dédiée du ticket
+// en ligne : une vraie page autonome, un vrai window.print() dessus,
+// jamais une iframe cachée (peu fiable pour @page sur mobile).
+(function () {
+  const brut = sessionStorage.getItem("aquapilo_ticket_hors_ligne");
+  if (!brut) return;
+  const vente = JSON.parse(brut);
+
+  const lignesHtml = vente.lignes.map((l) => `
+    <div class="ligne-produit bold">${l.nom}</div>
+    <div class="ligne-detail">
+      <span>${l.quantiteAff} x ${l.prix.toLocaleString("fr-FR")}</span>
+      <span>${l.montant.toLocaleString("fr-FR")} F</span>
+    </div>`).join("");
+
+  const d = new Date(vente.dateCreation);
+  const dateAff = d.toLocaleDateString("fr-FR")
+    + " " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
+  const totalAff = vente.montantTotal.toLocaleString("fr-FR").replace(/ /g, " ") + " FCFA";
+
+  document.getElementById("ticket").innerHTML = `
+    <div class="center bold" style="font-size:13px;">${vente.entrepriseNom}</div>
+    <div class="center">${vente.nomBoutique || ""}</div>
+    <div class="sep"></div>
+    <div class="center bold" style="border:2px solid #000; padding:2px; margin:4px 0;">
+      *** PROVISOIRE — EN ATTENTE DE SYNCHRONISATION ***
+    </div>
+    <div>Ticket : ${vente.numeroProvisoire}</div>
+    <div>${dateAff}</div>
+    <div>Vendeur : ${vente.vendeurNom}</div>
+    <div class="sep"></div>
+    ${lignesHtml}
+    <div class="sep"></div>
+    <div class="total"><span>TOTAL</span><span>${totalAff}</span></div>
+    <div>Paiement : ${vente.modeLibelle}</div>
+    <div class="sep"></div>
+    <div class="center footer">
+      Ticket provisoire — numéro définitif attribué à la synchronisation.<br>
+      Merci de votre visite !<br>À bientôt
+    </div>`;
+})();
+</script>
+</body>
+</html>
