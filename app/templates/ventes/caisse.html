@@ -531,8 +531,14 @@ document.getElementById("form-vente").addEventListener("submit", async (e) => {
 
 // Service worker : rend la caisse disponible hors-ligne (phase 1 —
 // fondations). Enregistré uniquement sur cette page, portée /ventes/.
+// Les navigateurs ne revérifient un service worker déjà installé que
+// rarement par défaut (environ une fois par 24h) : sans appel explicite
+// à update(), un déploiement peut mettre un jour entier avant d'arriver
+// sur un appareil déjà utilisé — d'où le forçage systématique ici, à
+// chaque ouverture de la caisse en ligne.
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js", { scope: "/ventes/" })
+    .then(reg => reg.update())
     .catch(err => console.warn("Service worker caisse non enregistré :", err));
 }
 
