@@ -233,6 +233,20 @@ def hors_ligne():
                            noms_boutiques=noms_boutiques, modes=MODES_LIBELLES)
 
 
+@ventes_bp.route("/mes-ventes")
+@login_required
+def mes_ventes():
+    """Historique personnel : uniquement les ventes que CE compte a
+    lui-même enregistrées (en ligne et hors-ligne), toutes boutiques
+    confondues si l'utilisateur en gère plusieurs. Lecture seule —
+    l'annulation reste soumise aux mêmes règles qu'ailleurs."""
+    ventes = (Vente.query.filter_by(user_id=current_user.id)
+             .order_by(Vente.id.desc()).all())
+    noms_boutiques = {b.id: b.nom for b in _boutiques()}
+    return render_template("ventes/mes_ventes.html", ventes=ventes,
+                           noms_boutiques=noms_boutiques, modes=MODES_LIBELLES)
+
+
 # ---------------- TICKET (impression / réimpression) ----------------
 @ventes_bp.route("/<int:vente_id>/ticket")
 @login_required

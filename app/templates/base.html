@@ -56,6 +56,9 @@
       <li class="nav-item nav-visible-hors-ligne d-none"><a class="nav-link {{ 'active' if request.endpoint == 'ventes.hors_ligne' }}"
           href="{{ url_for('ventes.hors_ligne') }}">
         <i class="bi bi-wifi-off"></i> Ventes hors-ligne</a></li>
+      <li class="nav-item nav-necessite-connexion"><a class="nav-link {{ 'active' if request.endpoint == 'ventes.mes_ventes' }}"
+          href="{{ url_for('ventes.mes_ventes') }}">
+        <i class="bi bi-receipt-cutoff"></i> Mes ventes</a></li>
       {% if current_user.is_gerant %}
       <li class="nav-item nav-necessite-connexion"><a class="nav-link {{ 'active' if request.blueprint == 'produits' }}"
           href="{{ url_for('produits.liste') }}">
