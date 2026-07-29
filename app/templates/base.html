@@ -53,7 +53,7 @@
           href="{{ url_for('ventes.journal') }}">
         <i class="bi bi-receipt"></i> Ventes</a></li>
       {% endif %}
-      <li class="nav-item nav-necessite-connexion"><a class="nav-link {{ 'active' if request.endpoint == 'ventes.hors_ligne' }}"
+      <li class="nav-item nav-visible-hors-ligne d-none"><a class="nav-link {{ 'active' if request.endpoint == 'ventes.hors_ligne' }}"
           href="{{ url_for('ventes.hors_ligne') }}">
         <i class="bi bi-wifi-off"></i> Ventes hors-ligne</a></li>
       {% if current_user.is_gerant %}
@@ -203,13 +203,17 @@
 // Masque les liens du menu qui ne fonctionnent pas hors-ligne (seule la
 // Caisse est réellement utilisable sans connexion) : cliquer dessus
 // hors-ligne échouerait de toute façon (page non disponible en cache),
-// autant ne pas les proposer.
+// autant ne pas les proposer. "Ventes hors-ligne" suit la logique
+// inverse (visible seulement hors-ligne) : décision explicite, même si
+// la page elle-même a besoin du réseau pour se charger.
 (function () {
-  const liens = document.querySelectorAll(".nav-necessite-connexion");
+  const liensConnexion = document.querySelectorAll(".nav-necessite-connexion");
+  const liensHorsLigne = document.querySelectorAll(".nav-visible-hors-ligne");
   const note = document.getElementById("note-hors-ligne");
   function majMenu() {
     const horsLigne = !navigator.onLine;
-    liens.forEach((el) => el.classList.toggle("d-none", horsLigne));
+    liensConnexion.forEach((el) => el.classList.toggle("d-none", horsLigne));
+    liensHorsLigne.forEach((el) => el.classList.toggle("d-none", !horsLigne));
     if (note) note.classList.toggle("d-none", !horsLigne);
   }
   window.addEventListener("online", majMenu);
