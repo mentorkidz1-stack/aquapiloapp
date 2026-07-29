@@ -469,7 +469,7 @@ function imprimerTicketHorsLigne(vente) {
   sessionStorage.setItem("aquapilo_ticket_hors_ligne", JSON.stringify({
     ...vente, entrepriseNom: ENTREPRISE_NOM, vendeurNom: VENDEUR_NOM,
   }));
-  window.location.href = "/static/caisse/ticket-hors-ligne.html";
+  window.location.href = "/ventes/ticket-hors-ligne";
 }
 
 async function mettreEnFileAttente(boutiqueId) {

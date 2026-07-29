@@ -8,7 +8,8 @@ import json
 from datetime import date, datetime
 
 from flask import (Blueprint, render_template, redirect, url_for,
-                   flash, request, abort, jsonify)
+                   flash, request, abort, jsonify, send_from_directory,
+                   current_app)
 from flask_login import login_required, current_user
 
 from app.extensions import db
@@ -46,6 +47,17 @@ def ping():
     # que l'état de la carte réseau de l'appareil, pas la joignabilité
     # du serveur (cf. phase 2).
     return "OK"
+
+
+@ventes_bp.route("/ticket-hors-ligne")
+def ticket_hors_ligne():
+    # Servi sous /ventes/ (et non /static/) pour rester dans la portée
+    # du service worker de la caisse (scope: "/ventes/") : hors de cette
+    # portée, le fichier a beau être précaché, le service worker ne
+    # l'intercepte jamais pour le servir hors-ligne — la navigation part
+    # alors sur le réseau, qui est justement indisponible.
+    return send_from_directory(f"{current_app.static_folder}/caisse",
+                               "ticket-hors-ligne.html")
 
 
 @ventes_bp.route("/caisse", methods=["GET", "POST"])
