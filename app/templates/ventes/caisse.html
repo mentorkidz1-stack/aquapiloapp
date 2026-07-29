@@ -133,7 +133,6 @@
 <script>
 const PRODUITS = {{ produits_json | tojson }};
 const ENTREPRISE_NOM = {{ current_user.entreprise.nom | tojson }};
-const VENDEUR_NOM = {{ current_user.nom_complet | tojson }};
 const lignes = [];
 let produitSelectionne = null;
 
@@ -467,7 +466,7 @@ btnAjouter.addEventListener("click", () => {
 // ligne : une vraie page autonome avec son propre bouton "Imprimer".
 function imprimerTicketHorsLigne(vente) {
   sessionStorage.setItem("aquapilo_ticket_hors_ligne", JSON.stringify({
-    ...vente, entrepriseNom: ENTREPRISE_NOM, vendeurNom: VENDEUR_NOM,
+    ...vente, entrepriseNom: ENTREPRISE_NOM,
   }));
   window.location.href = "/ventes/ticket-hors-ligne";
 }

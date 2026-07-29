@@ -42,44 +42,47 @@
     </a>
 
     <ul class="nav nav-pills flex-column mt-2 px-2">
-      <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'main.dashboard' }}"
+      <li class="nav-item nav-necessite-connexion"><a class="nav-link {{ 'active' if request.endpoint == 'main.dashboard' }}"
           href="{{ url_for('main.dashboard') }}">
         <i class="bi bi-speedometer2"></i> Tableau de bord</a></li>
       <li class="nav-item"><a class="nav-link fw-semibold {{ 'active' if request.endpoint == 'ventes.caisse' }}"
           href="{{ url_for('ventes.caisse') }}">
         <i class="bi bi-cash-register"></i> Caisse</a></li>
       {% if current_user.peut_voir_rapport_journalier %}
-      <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'ventes.journal' }}"
+      <li class="nav-item nav-necessite-connexion"><a class="nav-link {{ 'active' if request.endpoint == 'ventes.journal' }}"
           href="{{ url_for('ventes.journal') }}">
         <i class="bi bi-receipt"></i> Ventes</a></li>
       {% endif %}
-      <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'ventes.hors_ligne' }}"
+      <li class="nav-item nav-necessite-connexion"><a class="nav-link {{ 'active' if request.endpoint == 'ventes.hors_ligne' }}"
           href="{{ url_for('ventes.hors_ligne') }}">
         <i class="bi bi-wifi-off"></i> Ventes hors-ligne</a></li>
       {% if current_user.is_gerant %}
-      <li class="nav-item"><a class="nav-link {{ 'active' if request.blueprint == 'produits' }}"
+      <li class="nav-item nav-necessite-connexion"><a class="nav-link {{ 'active' if request.blueprint == 'produits' }}"
           href="{{ url_for('produits.liste') }}">
         <i class="bi bi-box-seam"></i> Produits</a></li>
-      <li class="nav-item"><a class="nav-link {{ 'active' if request.blueprint == 'achats' }}"
+      <li class="nav-item nav-necessite-connexion"><a class="nav-link {{ 'active' if request.blueprint == 'achats' }}"
           href="{{ url_for('achats.liste') }}">
         <i class="bi bi-truck"></i> Achats</a></li>
-      <li class="nav-item"><a class="nav-link {{ 'active' if request.blueprint == 'pertes' }}"
+      <li class="nav-item nav-necessite-connexion"><a class="nav-link {{ 'active' if request.blueprint == 'pertes' }}"
           href="{{ url_for('pertes.liste') }}">
         <i class="bi bi-exclamation-octagon"></i> Pertes</a></li>
-      <li class="nav-item"><a class="nav-link {{ 'active' if request.blueprint == 'stocks' }}"
+      <li class="nav-item nav-necessite-connexion"><a class="nav-link {{ 'active' if request.blueprint == 'stocks' }}"
           href="{{ url_for('stocks.journee') }}">
         <i class="bi bi-clipboard-data"></i> Stocks</a></li>
       {% if (current_user.is_direction or current_user.peut_voir_rapport_journalier)
             and current_user.role != 'gerant' %}
-      <li class="nav-item"><a class="nav-link {{ 'active' if request.blueprint == 'rapports' }}"
+      <li class="nav-item nav-necessite-connexion"><a class="nav-link {{ 'active' if request.blueprint == 'rapports' }}"
           href="{{ url_for('rapports.index') }}">
         <i class="bi bi-bar-chart-line"></i> Rapports</a></li>
       {% endif %}
       {% endif %}
-      <li class="nav-item"><a class="nav-link {{ 'active' if request.blueprint == 'clotures' }}"
+      <li class="nav-item nav-necessite-connexion"><a class="nav-link {{ 'active' if request.blueprint == 'clotures' }}"
           href="{{ url_for('clotures.index') }}">
         <i class="bi bi-lock"></i> Clôtures</a></li>
     </ul>
+    <div class="px-3 small text-white-50 d-none" id="note-hors-ligne">
+      <i class="bi bi-wifi-off"></i> D'autres pages nécessitent une connexion.
+    </div>
 
     <!-- Bloc utilisateur en bas -->
     <div class="mt-auto p-3 bloc-utilisateur">
@@ -91,11 +94,11 @@
         </div>
       </div>
       {% if current_user.is_direction %}
-      <a class="nav-link px-0 py-1 {{ 'active' if request.blueprint == 'admin' }}"
+      <a class="nav-link px-0 py-1 nav-necessite-connexion {{ 'active' if request.blueprint == 'admin' }}"
          href="{{ url_for('admin.utilisateurs') }}">
         <i class="bi bi-people"></i> Utilisateurs</a>
       {% endif %}
-      <a class="nav-link px-0 py-1 {{ 'active' if request.endpoint == 'auth.changer_mot_de_passe' }}"
+      <a class="nav-link px-0 py-1 nav-necessite-connexion {{ 'active' if request.endpoint == 'auth.changer_mot_de_passe' }}"
          href="{{ url_for('auth.changer_mot_de_passe') }}">
         <i class="bi bi-key"></i> Changer mon mot de passe</a>
     </div>
@@ -195,6 +198,23 @@
     }
   }
   localStorage.setItem("aquapilo_entreprise_id", String(idActuel));
+})();
+
+// Masque les liens du menu qui ne fonctionnent pas hors-ligne (seule la
+// Caisse est réellement utilisable sans connexion) : cliquer dessus
+// hors-ligne échouerait de toute façon (page non disponible en cache),
+// autant ne pas les proposer.
+(function () {
+  const liens = document.querySelectorAll(".nav-necessite-connexion");
+  const note = document.getElementById("note-hors-ligne");
+  function majMenu() {
+    const horsLigne = !navigator.onLine;
+    liens.forEach((el) => el.classList.toggle("d-none", horsLigne));
+    if (note) note.classList.toggle("d-none", !horsLigne);
+  }
+  window.addEventListener("online", majMenu);
+  window.addEventListener("offline", majMenu);
+  majMenu();
 })();
 </script>
 {% endif %}

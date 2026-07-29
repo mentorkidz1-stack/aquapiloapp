@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ticket provisoire</title>
+<title>Ticket</title>
 <style>
   /* ===== Gabarit thermique 58 mm — identique à ventes/ticket.html ===== */
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -93,12 +93,9 @@
     <div class="center bold" style="font-size:13px;">${vente.entrepriseNom}</div>
     <div class="center">${vente.nomBoutique || ""}</div>
     <div class="sep"></div>
-    <div class="center bold" style="border:2px solid #000; padding:2px; margin:4px 0;">
-      *** PROVISOIRE — EN ATTENTE DE SYNCHRONISATION ***
-    </div>
     <div>Ticket : ${vente.numeroProvisoire}</div>
     <div>${dateAff}</div>
-    <div>Vendeur : ${vente.vendeurNom}</div>
+    <div>Caissier</div>
     <div class="sep"></div>
     ${lignesHtml}
     <div class="sep"></div>
@@ -106,7 +103,6 @@
     <div>Paiement : ${vente.modeLibelle}</div>
     <div class="sep"></div>
     <div class="center footer">
-      Ticket provisoire — numéro définitif attribué à la synchronisation.<br>
       Merci de votre visite !<br>À bientôt
     </div>`;
 })();
