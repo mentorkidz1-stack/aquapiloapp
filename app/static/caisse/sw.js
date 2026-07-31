@@ -14,7 +14,7 @@
  *   jamais de raison de changer entre deux déploiements sans purge de
  *   version.
  */
-const VERSION = "v11";
+const VERSION = "v12";
 const CACHE_STATIQUE = `aquapilo-caisse-statique-${VERSION}`;
 const CACHE_PAGE = `aquapilo-caisse-page-${VERSION}`;
 
@@ -30,6 +30,7 @@ const RESSOURCES_STATIQUES = [
   "/static/vendor/manifest/icone-512.png",
   "/static/caisse/db.js",
   "/ventes/ticket-hors-ligne",
+  "/ventes/hors-ligne-indisponible",
 ];
 
 self.addEventListener("install", (event) => {
@@ -104,6 +105,17 @@ self.addEventListener("fetch", (event) => {
   if (RESSOURCES_STATIQUES.some((chemin) => url.pathname === chemin)) {
     event.respondWith(
       caches.match(req).then((reponse) => reponse || fetch(req))
+    );
+    return;
+  }
+
+  // Toute autre page dans la portée /ventes/ (Ventes hors-ligne, Mes
+  // ventes, journal...) a besoin du serveur pour afficher des données
+  // à jour — impossible à précacher utilement. Sans connexion, on
+  // affiche un message clair plutôt que l'erreur brute du navigateur.
+  if (req.mode === "navigate") {
+    event.respondWith(
+      fetch(req).catch(() => caches.match("/ventes/hors-ligne-indisponible"))
     );
   }
 });

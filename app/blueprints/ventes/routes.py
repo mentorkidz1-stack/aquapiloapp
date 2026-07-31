@@ -60,6 +60,16 @@ def ticket_hors_ligne():
                                "ticket-hors-ligne.html")
 
 
+@ventes_bp.route("/hors-ligne-indisponible")
+def hors_ligne_indisponible():
+    # Page de repli précachée : servie par le service worker (cf. sw.js)
+    # à la place de l'erreur brute du navigateur quand une page qui a
+    # besoin du serveur (Ventes hors-ligne, Mes ventes...) est ouverte
+    # sans connexion.
+    return send_from_directory(f"{current_app.static_folder}/caisse",
+                               "hors-ligne-indisponible.html")
+
+
 @ventes_bp.route("/caisse", methods=["GET", "POST"])
 @login_required
 @periode_non_cloturee(lambda: (date.today(), None))  # boutique lue dans le form
