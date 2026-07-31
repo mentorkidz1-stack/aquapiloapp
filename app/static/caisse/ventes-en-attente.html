@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ventes en attente</title>
+<link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+<link href="/static/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+<link href="/static/css/custom.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="p-3 p-lg-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Ventes en attente</h1>
+    <a href="/ventes/caisse" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Retour à la caisse</a>
+  </div>
+  <p class="text-muted small">
+    Ventes créées sur cet appareil, pas encore synchronisées avec le
+    serveur — lues directement sur l'appareil, donc disponibles même
+    sans connexion. Elles se synchroniseront automatiquement au retour
+    de la connexion (ou via "Synchroniser maintenant" sur la Caisse).
+  </p>
+
+  <div class="table-responsive">
+  <table class="table table-hover bg-white shadow-sm align-middle">
+    <thead class="table-light">
+      <tr><th>Date</th><th>Ticket provisoire</th><th>Boutique</th>
+          <th class="text-end">Montant</th><th>Paiement</th><th>Statut</th><th></th></tr>
+    </thead>
+    <tbody id="corps-tableau">
+      <tr><td colspan="7" class="text-center text-muted py-4">Chargement...</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<script src="/static/caisse/db.js"></script>
+<script>
+function fcfa(n) {
+  return n.toLocaleString("fr-FR").replace(/ /g, " ") + " FCFA";
+}
+
+async function afficher() {
+  const corps = document.getElementById("corps-tableau");
+  if (!window.AquapiloDB) {
+    corps.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Stockage local non pris en charge par ce navigateur.</td></tr>';
+    return;
+  }
+  const ventes = await AquapiloDB.listerVentesAttente();
+  ventes.sort((a, b) => b.dateCreation - a.dateCreation);
+  if (ventes.length === 0) {
+    corps.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">'
+      + '<i class="bi bi-check-circle fs-4 d-block mb-1"></i>Aucune vente en attente.</td></tr>';
+    return;
+  }
+  corps.innerHTML = ventes.map((v) => {
+    const d = new Date(v.dateCreation);
+    const dateAff = d.toLocaleDateString("fr-FR") + " "
+      + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    const badge = v.statut === "conflit"
+      ? '<span class="badge bg-danger">Conflit</span>'
+      : '<span class="badge bg-warning text-dark">En attente</span>';
+    const erreur = v.statut === "conflit" && v.erreur
+      ? `<div class="text-danger small mt-1">${v.erreur}</div>` : "";
+    return `
+    <tr>
+      <td class="text-nowrap">${dateAff}</td>
+      <td>${v.numeroProvisoire}${erreur}</td>
+      <td>${v.nomBoutique || ""}</td>
+      <td class="text-end">${fcfa(v.montantTotal)}</td>
+      <td>${v.modeLibelle || ""}</td>
+      <td>${badge}</td>
+      <td class="text-end">
+        <button class="btn btn-sm btn-outline-danger" title="Retirer de la file"
+                onclick="supprimer('${v.uuid}')"><i class="bi bi-x-circle"></i></button>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+window.supprimer = async function (uuid) {
+  if (!confirm("Retirer cette vente de la file d'attente ? Elle ne sera jamais envoyée au serveur.")) return;
+  await AquapiloDB.supprimerVenteAttente(uuid);
+  afficher();
+};
+
+afficher();
+</script>
+</body>
+</html>

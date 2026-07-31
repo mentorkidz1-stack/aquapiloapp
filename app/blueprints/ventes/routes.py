@@ -227,20 +227,17 @@ def journal():
                            mode=mode)
 
 
-# ---------------- VENTES HORS-LIGNE (caissier + gérant) ----------------
+# ---------------- VENTES EN ATTENTE (caissier + gérant) ----------------
 @ventes_bp.route("/hors-ligne")
-@login_required
 def hors_ligne():
-    """Ventes synchronisées depuis la caisse hors-ligne (uuid_client non
-    nul). Un caissier ne voit que celles de sa propre boutique — même
-    restriction que pour la consultation d'un ticket individuel."""
-    requete = Vente.query.filter(Vente.uuid_client.isnot(None))
-    if not current_user.is_gerant:
-        requete = requete.filter_by(boutique_id=current_user.boutique_id)
-    ventes = requete.order_by(Vente.id.desc()).all()
-    noms_boutiques = {b.id: b.nom for b in _boutiques()}
-    return render_template("ventes/hors_ligne.html", ventes=ventes,
-                           noms_boutiques=noms_boutiques, modes=MODES_LIBELLES)
+    """Page statique et précachée : lit directement la file d'attente
+    IndexedDB de l'appareil (ventes créées hors-ligne, pas encore
+    synchronisées). Un rendu serveur ne conviendrait pas ici — ces
+    données n'existent que sur l'appareil, et la page doit justement
+    rester consultable sans connexion, ce que le service worker ne
+    peut garantir que pour un fichier statique dans sa portée."""
+    return send_from_directory(f"{current_app.static_folder}/caisse",
+                               "ventes-en-attente.html")
 
 
 @ventes_bp.route("/mes-ventes")
@@ -294,7 +291,7 @@ def annuler(vente_id):
               "Le stock a été automatiquement restitué.", "success")
     if current_user.is_gerant:
         return redirect(url_for("ventes.journal", jour=vente.date_vente.isoformat()))
-    return redirect(url_for("ventes.hors_ligne"))
+    return redirect(url_for("ventes.mes_ventes"))
 
 
 # ---------------- DÉMO ticket (test d'impression) ----------------
